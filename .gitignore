@@ -1,0 +1,3 @@
+*.ckpt
+*.pth
+nyu_depth_v2/
