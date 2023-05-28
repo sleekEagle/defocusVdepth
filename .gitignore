@@ -1,3 +1,5 @@
 *.ckpt
 *.pth
 nyu_depth_v2/
+*.pyc
+stable-diffusion/
