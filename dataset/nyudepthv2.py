@@ -33,9 +33,13 @@ class nyudepthv2(BaseDataset):
         if is_train:
             txt_path += '/train_list.txt'
             self.data_path = self.data_path + '/sync'
+            print("data path: "+str(self.data_path))
+            print("list path: "+str(txt_path))
         else:
             txt_path += '/test_list.txt'
             self.data_path = self.data_path + '/official_splits/test/'
+            print("data path: "+str(self.data_path))
+            print("list path: "+str(txt_path))
  
         self.filenames_list = self.readTXT(txt_path) # debug
         phase = 'train' if is_train else 'test'
@@ -57,7 +61,6 @@ class nyudepthv2(BaseDataset):
                 break
         
         assert class_id >= 0
-
         image = cv2.imread(img_path)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         depth = cv2.imread(gt_path, cv2.IMREAD_UNCHANGED).astype('float32')
