@@ -114,8 +114,8 @@ def validate(val_loader, model, device, args):
         for key in result_metrics.keys():
             result_metrics[key] += computed_result[key]
 
-    # for key in result_metrics.keys():
-    #     result_metrics[key] = result_metrics[key] / (batch_idx + 1)
+    for key in result_metrics.keys():
+        result_metrics[key] = result_metrics[key] / (batch_idx + 1)
 
     ddp_logger.synchronize_between_processes()
 
