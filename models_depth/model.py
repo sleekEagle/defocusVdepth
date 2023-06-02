@@ -131,7 +131,7 @@ class VPDDepth(nn.Module):
             if isinstance(m, nn.Conv2d):
                 normal_init(m, std=0.001, bias=0)
 
-        self.blur_n=args.blur_n
+        # self.blur_n=args.blur_n
         
 
     def forward(self, x, class_ids=None):    

@@ -222,6 +222,7 @@ results_dict = validate(val_loader,model,device=device, args=args)
 
 # import os
 # path='C:\\Users\\lahir\\code\\VPD\\depth\\nyu_depth_v2\\sync\\sync\\'
+# path='C:\\Users\\lahir\\data\\VPD\\nyu_depth_v2\\official_splits\\train\\'
 
 
 # filelist = []
