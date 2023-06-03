@@ -131,7 +131,7 @@ class VPDDepth(nn.Module):
             if isinstance(m, nn.Conv2d):
                 normal_init(m, std=0.001, bias=0)
 
-        # self.blur_n=args.blur_n
+        self.blur_n=args.blur_n
         
 
     def forward(self, x, class_ids=None):    
@@ -161,12 +161,12 @@ class VPDDepth(nn.Module):
         out = self.decoder([conv_feats])
         #after decoder feature dims for 480x480 input : (bs,192,480,480)
         #supervise blur here
-        # blur=torch.mean(out[:,0:self.blur_n,:,:],dim=1)
+        blur=torch.mean(out[:,0:self.blur_n,:,:],dim=1)
         out_depth = self.last_layer_depth(out)
         #after last_layer_depth feature dims for 480x480 input : (bs,1536,480,480)
         out_depth = torch.sigmoid(out_depth) * self.max_depth
 
-        return {'pred_d': out_depth}
+        return {'pred_d': out_depth,'blur':blur}
 
 
 class Decoder(nn.Module):

@@ -70,7 +70,8 @@ def validate(val_loader, model, device, args):
                 c=torch.unsqueeze(class_ids[i],dim=0)
                 pred = model(img, class_ids=c)
                 pred_d = pred['pred_d']
-                # blur=pred['blur']
+                blur=pred['blur']
+                print('blur:'+str(blur.shape))
                 predlist=torch.cat((predlist,pred_d),dim=0)
 
         # pred_d = pred['pred_d']

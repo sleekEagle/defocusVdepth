@@ -42,6 +42,9 @@ class BaseOptions():
         parser.add_argument('--do_kb_crop',     type=int, default=1)
         parser.add_argument('--kitti_crop', type=str, default=None,
                             choices=['garg_crop', 'eigen_crop'])
+        
+        #how many filters are used to preict depth out of 192
+        parser.add_argument('--blur_n',     type=int, default=20)
 
         parser.add_argument('--pretrained',    type=str, default='')
         parser.add_argument('--drop_path_rate',     type=float, default=0.3)
