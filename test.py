@@ -40,9 +40,8 @@ def validate(val_loader, model, device, args):
     for batch_idx, batch in enumerate(val_loader):
         input_RGB = batch['image'].to(device)
         depth_gt = batch['depth'].to(device)
-        filename = batch['filename'][0]
+        # filename = batch['filename'][0]
         class_id = batch['class_id']
-
 
         with torch.no_grad():
             if args.shift_window_test:
@@ -90,27 +89,27 @@ def validate(val_loader, model, device, args):
         pred_crop, gt_crop = metrics.cropping_img(args, pred_d, depth_gt)
         computed_result = metrics.eval_depth(pred_crop, gt_crop)
     
-        if args.save_eval_pngs:
-            save_path = os.path.join(result_path, filename)
-            if save_path.split('.')[-1] == 'jpg':
-                save_path = save_path.replace('jpg', 'png')
-            pred_d = pred_d.squeeze()
-            if args.dataset == 'nyudepthv2':
-                pred_d = pred_d.cpu().numpy() * 1000.0
-                cv2.imwrite(save_path, pred_d.astype(np.uint16),
-                            [cv2.IMWRITE_PNG_COMPRESSION, 0])
-            else:
-                pred_d = pred_d.cpu().numpy() * 256.0
-                cv2.imwrite(save_path, pred_d.astype(np.uint16),
-                            [cv2.IMWRITE_PNG_COMPRESSION, 0])
+        # if args.save_eval_pngs:
+        #     save_path = os.path.join(result_path, filename)
+        #     if save_path.split('.')[-1] == 'jpg':
+        #         save_path = save_path.replace('jpg', 'png')
+        #     pred_d = pred_d.squeeze()
+        #     if args.dataset == 'nyudepthv2':
+        #         pred_d = pred_d.cpu().numpy() * 1000.0
+        #         cv2.imwrite(save_path, pred_d.astype(np.uint16),
+        #                     [cv2.IMWRITE_PNG_COMPRESSION, 0])
+        #     else:
+        #         pred_d = pred_d.cpu().numpy() * 256.0
+        #         cv2.imwrite(save_path, pred_d.astype(np.uint16),
+        #                     [cv2.IMWRITE_PNG_COMPRESSION, 0])
             
-        if args.save_visualize:
-            save_path = os.path.join(result_path, filename)
-            pred_d_numpy = pred_d.squeeze().cpu().numpy()
-            pred_d_numpy = (pred_d_numpy / pred_d_numpy.max()) * 255
-            pred_d_numpy = pred_d_numpy.astype(np.uint8)
-            pred_d_color = cv2.applyColorMap(pred_d_numpy, cv2.COLORMAP_RAINBOW)
-            cv2.imwrite(save_path, pred_d_color)
+        # if args.save_visualize:
+        #     save_path = os.path.join(result_path, filename)
+        #     pred_d_numpy = pred_d.squeeze().cpu().numpy()
+        #     pred_d_numpy = (pred_d_numpy / pred_d_numpy.max()) * 255
+        #     pred_d_numpy = pred_d_numpy.astype(np.uint8)
+        #     pred_d_color = cv2.applyColorMap(pred_d_numpy, cv2.COLORMAP_RAINBOW)
+        #     cv2.imwrite(save_path, pred_d_color)
 
         ddp_logger.update(**computed_result)
         for key in result_metrics.keys():
