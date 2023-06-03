@@ -42,6 +42,7 @@ def validate(val_loader, model, device, args):
         depth_gt = batch['depth'].to(device)
         # filename = batch['filename'][0]
         class_id = batch['class_id']
+        blur_gt=batch['blur']
 
         with torch.no_grad():
             if args.shift_window_test:
@@ -62,7 +63,7 @@ def validate(val_loader, model, device, args):
                 input_RGB = torch.cat((input_RGB, torch.flip(input_RGB, [3])), dim=0)
                 class_ids = torch.cat((class_ids, class_ids), dim=0)
             
-            #loop insted of sending through the network for lower memory GPUs (but slower)
+            #loop insted of sending through the network for lower memory GPUs (this is slower)
             num=input_RGB.shape[0]
             predlist=torch.empty((0,1,input_RGB.shape[-2],input_RGB.shape[-1])).to(device)
             for i in range(num):
@@ -71,7 +72,6 @@ def validate(val_loader, model, device, args):
                 pred = model(img, class_ids=c)
                 pred_d = pred['pred_d']
                 blur=pred['blur']
-                print('blur:'+str(blur.shape))
                 predlist=torch.cat((predlist,pred_d),dim=0)
 
         # pred_d = pred['pred_d']
@@ -159,13 +159,6 @@ val_dataset = get_dataset(**dataset_kwargs, is_train=False)
 #             val_dataset, num_replicas=utils.get_world_size(), shuffle=False)
 val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=1,
                                              pin_memory=True)
-
-# for batch_idx, batch in enumerate(val_loader):
-#         input_RGB = batch['image'].to(device)
-#         depth_gt = batch['depth'].to(device)
-#         filename = batch['filename'][0]
-#         class_id = batch['class_id']
-#         break
 
 results_dict = validate(val_loader,model,device=device, args=args)
 print(results_dict)

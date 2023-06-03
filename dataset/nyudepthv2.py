@@ -9,6 +9,11 @@ from dataset.base_dataset import BaseDataset
 import json
 import scipy
 
+
+def get_blur(s1,s2):
+    blur=abs(s2-s1)/s2
+    return blur
+
 class nyudepthv2(BaseDataset):
     def __init__(self, data_path, rgb_dir,depth_dir,filenames_path='./dataset/filenames/',
                  is_train=True, crop_size=(448, 576), scale_size=None):
@@ -70,6 +75,7 @@ class nyudepthv2(BaseDataset):
         image = cv2.imread(img_path)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         depth = cv2.imread(gt_path, cv2.IMREAD_UNCHANGED).astype('float32')
+        blur = get_blur(0.1,depth)
 
         if self.scale_size:
             image = cv2.resize(image, (self.scale_size[0], self.scale_size[1]))
@@ -82,4 +88,4 @@ class nyudepthv2(BaseDataset):
 
         depth = depth / 1000.0  # convert in meters
 
-        return {'image': image, 'depth': depth, 'class_id': class_id}
+        return {'image': image, 'depth': depth, 'blur':blur, 'class_id': class_id}
