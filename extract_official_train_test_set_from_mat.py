@@ -63,6 +63,7 @@ if __name__ == "__main__":
         sys.exit(0)
 
     h5_file = h5py.File(sys.argv[1], "r")
+
     # h5py is not able to open that file. but scipy is
     # train_test = scipy.io.loadmat(sys.argv[2])
     out_folder = sys.argv[2]

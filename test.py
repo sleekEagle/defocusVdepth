@@ -43,6 +43,7 @@ def validate(val_loader, model, device, args):
         filename = batch['filename'][0]
         class_id = batch['class_id']
 
+
         with torch.no_grad():
             if args.shift_window_test:
                 bs, _, h, w = input_RGB.shape
@@ -70,7 +71,7 @@ def validate(val_loader, model, device, args):
                 c=torch.unsqueeze(class_ids[i],dim=0)
                 pred = model(img, class_ids=c)
                 pred_d = pred['pred_d']
-                blur=pred['blur']
+                # blur=pred['blur']
                 predlist=torch.cat((predlist,pred_d),dim=0)
 
         # pred_d = pred['pred_d']
@@ -150,7 +151,7 @@ model.eval()
 # model(img)
 
 # dataset settings
-dataset_kwargs = {'dataset_name': args.dataset, 'data_path': args.data_path}
+dataset_kwargs = {'dataset_name': args.dataset, 'data_path': args.data_path, 'rgb_dir':args.rgb_dir, 'depth_dir':args.depth_dir}
 dataset_kwargs['crop_size'] = (args.crop_h, args.crop_w)
 
 val_dataset = get_dataset(**dataset_kwargs, is_train=False)
@@ -159,7 +160,15 @@ val_dataset = get_dataset(**dataset_kwargs, is_train=False)
 val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=1,
                                              pin_memory=True)
 
+# for batch_idx, batch in enumerate(val_loader):
+#         input_RGB = batch['image'].to(device)
+#         depth_gt = batch['depth'].to(device)
+#         filename = batch['filename'][0]
+#         class_id = batch['class_id']
+#         break
+
 results_dict = validate(val_loader,model,device=device, args=args)
+print(results_dict)
 # torch.utils.data.get_worker_info() 
 
 

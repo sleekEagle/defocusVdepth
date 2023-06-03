@@ -8,9 +8,11 @@ import cv2
 
 from dataset.base_dataset import BaseDataset
 import json
+import h5py
+import scipy 
 
 class nyudepthv2(BaseDataset):
-    def __init__(self, data_path, filenames_path='./dataset/filenames/',
+    def __init__(self, data_path,rgb_dir,depth_dir,
                  is_train=True, crop_size=(448, 576), scale_size=None):
         super().__init__(crop_size)
 
@@ -21,7 +23,6 @@ class nyudepthv2(BaseDataset):
         self.scale_size = scale_size
 
         self.is_train = is_train
-        self.data_path = os.path.join(data_path, 'nyu_depth_v2')
 
         self.image_path_list = []
         self.depth_path_list = []
@@ -29,41 +30,47 @@ class nyudepthv2(BaseDataset):
         with open('nyu_class_list.json', 'r') as f:
             self.class_list = json.load(f)
 
-        txt_path = os.path.join(filenames_path, 'nyudepthv2')
+        #read scene names
+        scene_path=os.path.join(data_path, 'scenes.mat')
+        self.scenes=scipy.io.loadmat(scene_path)['scenes']
+
+        #read splits
+        splits_path=os.path.join(data_path, 'splits.mat')
+        splits=scipy.io.loadmat(splits_path)
         if is_train:
-            txt_path += '/train_list.txt'
-            self.data_path = self.data_path + '/sync'
-            print("data path: "+str(self.data_path))
-            print("list path: "+str(txt_path))
+            self.file_idx=list(splits['trainNdxs'][:,0])
         else:
-            txt_path += '/test_list.txt'
-            self.data_path = self.data_path + '/official_splits/test/'
-            print("data path: "+str(self.data_path))
-            print("list path: "+str(txt_path))
- 
-        self.filenames_list = self.readTXT(txt_path) # debug
+            self.file_idx=list(splits['testNdxs'][:,0])
+
+        self.rgbpath=os.path.join(data_path,rgb_dir)
+        self.depthpath=os.path.join(data_path,depth_dir)
+  
         phase = 'train' if is_train else 'test'
         print("Dataset: NYU Depth V2")
-        print("# of %s images: %d" % (phase, len(self.filenames_list)))
+        print("# of %s images: %d" % (phase, len(self.file_idx)))
 
     def __len__(self):
-        return len(self.filenames_list)
+        return len(self.file_idx)
 
     def __getitem__(self, idx):
-        img_path = self.data_path + self.filenames_list[idx].split(' ')[0]
-        gt_path = self.data_path + self.filenames_list[idx].split(' ')[1]
-        filename = img_path.split('/')[-2] + '_' + img_path.split('/')[-1]
+        img_path=os.path.join(self.rgbpath,str(self.file_idx[idx])+'.png')
+        depth_path=os.path.join(self.depthpath,str(self.file_idx[idx])+'.png')
+        print('img_path:'+str(img_path))
+        print('depth_path:'+str(depth_path))
+        scene_name=self.scenes[idx][0][0][:-5]
+        print("scene:"+str(scene_name))
 
         class_id = -1
         for i, name in enumerate(self.class_list):
-            if name in filename:
+            if name in scene_name:
                 class_id = i
                 break
+        print('class id:'+str(class_id))
         
         assert class_id >= 0
         image = cv2.imread(img_path)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        depth = cv2.imread(gt_path, cv2.IMREAD_UNCHANGED).astype('float32')
+        depth = cv2.imread(depth_path, cv2.IMREAD_UNCHANGED).astype('float32')
 
         # print(image.shape, depth.shape, self.scale_size)
 
@@ -80,4 +87,4 @@ class nyudepthv2(BaseDataset):
 
         depth = depth / 1000.0  # convert in meters
 
-        return {'image': image, 'depth': depth, 'filename': filename, 'class_id': class_id}
+        return {'image': image, 'depth': depth, 'filename': scene_name, 'class_id': class_id}
