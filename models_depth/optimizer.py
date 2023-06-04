@@ -6,9 +6,9 @@
 # ------------------------------------------------------------------------------
 
 import json
-from mmcv.runner import OPTIMIZER_BUILDERS, DefaultOptimizerConstructor
-from mmcv.runner import build_optimizer
-from mmcv.runner import get_dist_info
+from mmengine.runner import OPTIMIZER_BUILDERS, DefaultOptimizerConstructor
+from mmengine.runner import build_optimizer
+from mmengine.runner import get_dist_info
 
 
 def get_num_layer_for_swin(var_name, num_max_layer, layers_per_stage):

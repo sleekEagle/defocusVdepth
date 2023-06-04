@@ -42,7 +42,7 @@ class BaseDataset(Dataset):
 
         return listInTXT
 
-    def augment_training_data(self, image, depth):
+    def augment_training_data(self, image, depth ,blur):
         H, W, C = image.shape
 
         if self.count % 4 == 0:
@@ -60,20 +60,22 @@ class BaseDataset(Dataset):
         additional_targets = {'depth': 'mask'}
         aug = A.Compose(transforms=self.basic_transform,
                         additional_targets=additional_targets)
-        augmented = aug(image=image, depth=depth)
+        augmented = aug(image=image, depth=depth,blur=blur)
         image = augmented['image']
         depth = augmented['depth']
+        blur = augmented['blur']
 
         image = self.to_tensor(image)
         depth = self.to_tensor(depth).squeeze()
+        blur = self.to_tensor(blur).squeeze()
 
         self.count += 1
 
-        return image, depth
+        return image,depth,blur
 
-    def augment_test_data(self, image, depth):
+    def augment_test_data(self, image, depth,blur):
         image = self.to_tensor(image)
         depth = self.to_tensor(depth).squeeze()
-
-        return image, depth
+        blur = self.to_tensor(blur).squeeze()
+        return image,depth,blur
 

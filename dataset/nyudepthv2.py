@@ -11,6 +11,7 @@ import scipy
 
 
 def get_blur(s1,s2):
+    s2[s2==0]=-1
     blur=abs(s2-s1)/s2
     return blur
 
@@ -82,9 +83,9 @@ class nyudepthv2(BaseDataset):
             depth = cv2.resize(depth, (self.scale_size[0], self.scale_size[1]))
         
         if self.is_train:
-            image, depth = self.augment_training_data(image, depth)
+            image,depth,blur = self.augment_training_data(image, depth,blur)
         else:
-            image, depth = self.augment_test_data(image, depth)
+            image,depth,blur = self.augment_test_data(image, depth,blur)
 
         depth = depth / 1000.0  # convert in meters
 
