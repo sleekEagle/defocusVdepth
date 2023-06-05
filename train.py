@@ -9,7 +9,7 @@ import torch.backends.cudnn as cudnn
 import torch.optim as optim
 import sys 
 #include stable diffision path
-sys.path.append('C:\\Users\\lahir\\code\\defocusVdepth\\stable-diffusion\\')
+sys.path.append('stable-diffusion')
 from models_depth.model import VPDDepth
 import utils_depth.metrics as metrics
 import utils_depth.logging as logging
@@ -23,6 +23,8 @@ from tensorboardX import SummaryWriter
 # from models_depth.optimizer import build_optimizers
 from utils_depth.criterion import SiLogLoss
 from configs.train_options import TrainOptions
+
+import test
 
 metric_name = ['d1', 'd2', 'd3', 'abs_rel', 'sq_rel', 'rmse', 'rmse_log',
                'log10', 'silog']
@@ -39,6 +41,7 @@ device = torch.device(0)
 model = VPDDepth(args=args)
 cudnn.benchmark = True
 model.to(device)
+#load weights to the model
 from collections import OrderedDict
 if args.resume_from:
     model_weight = torch.load(args.resume_from)['model']
@@ -96,8 +99,4 @@ for batch_idx, batch in enumerate(train_loader):
     optimizer.zero_grad()
     loss_d = criterion_d(preds['pred_d'].squeeze(dim=0), depth_gt)
     loss_d.backward()
-
-
-
-
-
+    optimizer.step()
