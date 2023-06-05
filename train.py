@@ -86,7 +86,7 @@ val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=1,pin_memory=Tr
 optimizer = optim.AdamW(model_params,lr=args.max_lr, betas=(0.9, 0.999))
 criterion_d = SiLogLoss()
 model.train()
-
+#iterate though dataset
 for batch_idx, batch in enumerate(train_loader):
     input_RGB = batch['image'].to(device)
     depth_gt = batch['depth'].to(device)
