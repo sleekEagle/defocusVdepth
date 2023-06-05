@@ -47,7 +47,7 @@ class VPDDepthEncoder(nn.Module):
 
         config = OmegaConf.load('./v1-inference.yaml')
         if sd_path is None:
-            config.model.params.ckpt_path = '../checkpoints/v1-5-pruned-emaonly.ckpt'
+            config.model.params.ckpt_path = './ckpt/v1-5-pruned-emaonly.ckpt'
         else:
             config.model.params.ckpt_path = f'../{sd_path}'
 
