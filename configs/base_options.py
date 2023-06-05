@@ -32,7 +32,7 @@ class BaseOptions():
         parser.add_argument('--depth_dir',    type=str, default='rawDepth')
         parser.add_argument('--dataset',      type=str, default='nyudepthv2',
                             choices=['nyudepthv2', 'kitti', 'imagepath'])
-        parser.add_argument('--batch_size',   type=int, default=8)
+        parser.add_argument('--batch_size',   type=int, default=1)
         parser.add_argument('--workers',      type=int, default=8)
         
         # depth configs

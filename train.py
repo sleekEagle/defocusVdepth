@@ -6,6 +6,7 @@ from datetime import datetime
 import torch
 import torch.optim as optim
 import torch.backends.cudnn as cudnn
+import torch.optim as optim
 import sys
 sys.path.append('C:\\Users\\lahir\\code\\defocusVdepth\\stable-diffusion\\')
 from models_depth.model import VPDDepth
@@ -43,6 +44,7 @@ if args.resume_from:
     if 'module' in next(iter(model_weight.items()))[0]:
         model_weight = OrderedDict((k[7:], v) for k, v in model_weight.items())
     model.load_state_dict(model_weight, strict=False)
+model_params = model.parameters()
 
 #create the name of the model
 pretrain = args.pretrained.split('.')[0]
@@ -64,11 +66,12 @@ print('This experiments: ', exp_name)
 dataset_kwargs = {'dataset_name': args.dataset, 'data_path': args.data_path,'rgb_dir':args.rgb_dir, 'depth_dir':args.depth_dir}
 dataset_kwargs['crop_size'] = (args.crop_h, args.crop_w)
 
-train_dataset = get_dataset(**dataset_kwargs)
+train_dataset = get_dataset(**dataset_kwargs,is_train=True)
 val_dataset = get_dataset(**dataset_kwargs, is_train=False)
 
-train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=args.batch_size,num_workers=args.workers, 
-                                               pin_memory=True, drop_last=True)
+
+train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=1,pin_memory=True)
+
 val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=1,pin_memory=True)
 
 # criterion_d = SiLogLoss()
@@ -76,13 +79,22 @@ val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=1,pin_memory=Tr
 #                 constructor='LDMOptimizerConstructor',
 #                 paramwise_cfg=dict(layer_decay_rate=args.layer_decay, no_decay_names=['relative_position_bias_table', 'rpe_mlp', 'logit_scale'])))
 
-for batch_idx, batch in enumerate(val_loader):
+optimizer = optim.AdamW(model_params,lr=args.max_lr, betas=(0.9, 0.999))
+criterion_d = SiLogLoss()
+model.train()
+
+for batch_idx, batch in enumerate(train_loader):
     input_RGB = batch['image'].to(device)
     depth_gt = batch['depth'].to(device)
     class_id = batch['class_id']
-    blur = batch['blur'].to(device)
-    print('blur:'+str(blur.shape))
-    break
+    gt_blur = batch['blur'].to(device)
+
+    print('blur:'+str(gt_blur.shape))
+
+    preds = model(input_RGB, class_ids=class_id)
+    optimizer.zero_grad()
+    loss_d = criterion_d(preds['pred_d'].squeeze(dim=0), depth_gt)
+    loss_d.backward()
 
 
 
