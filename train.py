@@ -8,6 +8,7 @@ import torch.optim as optim
 import torch.backends.cudnn as cudnn
 import torch.optim as optim
 import sys 
+#include stable diffision path
 sys.path.append('C:\\Users\\lahir\\code\\defocusVdepth\\stable-diffusion\\')
 from models_depth.model import VPDDepth
 import utils_depth.metrics as metrics
