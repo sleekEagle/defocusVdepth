@@ -57,7 +57,8 @@ class BaseDataset(Dataset):
             image[:, l:l+w, 1] = depth[:, l:l+w]
             image[:, l:l+w, 2] = depth[:, l:l+w]
 
-        additional_targets = {'depth': 'mask'}
+        additional_targets = {'depth': 'mask',
+                              'blur':'mask'}
         aug = A.Compose(transforms=self.basic_transform,
                         additional_targets=additional_targets)
         augmented = aug(image=image, depth=depth,blur=blur)

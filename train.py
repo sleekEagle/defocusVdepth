@@ -21,7 +21,7 @@ import utils
 from tensorboardX import SummaryWriter
 
 # from models_depth.optimizer import build_optimizers
-from utils_depth.criterion import SiLogLoss
+from utils_depth.criterion import SiLogLoss,MSELoss
 from configs.train_options import TrainOptions
 
 import test
@@ -85,6 +85,7 @@ val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=1,pin_memory=Tr
 
 optimizer = optim.AdamW(model_params,lr=args.max_lr, betas=(0.9, 0.999))
 criterion_d = SiLogLoss()
+criterion_b=MSELoss()
 model.train()
 #iterate though dataset
 for batch_idx, batch in enumerate(train_loader):
@@ -92,11 +93,15 @@ for batch_idx, batch in enumerate(train_loader):
     depth_gt = batch['depth'].to(device)
     class_id = batch['class_id']
     gt_blur = batch['blur'].to(device)
+    break
 
     print('blur:'+str(gt_blur.shape))
 
     preds = model(input_RGB, class_ids=class_id)
     optimizer.zero_grad()
     loss_d = criterion_d(preds['pred_d'].squeeze(dim=0), depth_gt)
-    loss_d.backward()
+    loss_b=criterion_b(preds['blur'],gt_blur)
+    loss=loss_d+loss_b
+
+    loss.backward()
     optimizer.step()
