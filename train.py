@@ -27,6 +27,7 @@ from configs.train_options import TrainOptions
 import test
 import importlib
 importlib.reload(test)
+import time
 
 metric_name = ['d1', 'd2', 'd3', 'abs_rel', 'sq_rel', 'rmse', 'rmse_log',
                'log10', 'silog']
@@ -80,8 +81,8 @@ train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=3,pin_memor
 
 val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=1,pin_memory=True)
 
-results_dict=test.validate_single(val_loader, model, device, args,lowGPU=True)
-print(results_dict)
+# results_dict=test.validate_single(val_loader, model, device, args,lowGPU=True)
+# print(results_dict)
 
 # criterion_d = SiLogLoss()
 # optimizer = build_optimizers(model, dict(type='AdamW', lr=args.max_lr, betas=(0.9, 0.999), weight_decay=args.weight_decay,
@@ -95,6 +96,7 @@ model.train()
 #iterate though dataset
 for i in range(1000):
     total_d_loss,total_b_loss=0,0
+    start = time.time()
     for batch_idx, batch in enumerate(train_loader):
         input_RGB = batch['image'].to(device)
         depth_gt = batch['depth'].to(device)
@@ -112,7 +114,9 @@ for i in range(1000):
         optimizer.step()
         if batch_idx%50==0:
              print("batch idx=%2d" %(batch_idx))
-    print("Epochs=%3d blur loss=%5.4f  depth loss=%5.4f" %(i,total_b_loss/len(train_loader),total_d_loss/len(train_loader)))      
+    print("Epochs=%3d blur loss=%5.4f  depth loss=%5.4f" %(i,total_b_loss/len(train_loader),total_d_loss/len(train_loader)))  
+    end = time.time()
+    print("Elapsed time = %11.1f" %(end-start))    
     if i%10==0:
         results_dict=test.validate_single(val_loader, model, device, args,lowGPU=True)
         print(results_dict)
