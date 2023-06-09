@@ -33,6 +33,7 @@ class BaseDataset(Dataset):
             A.RandomGamma(),
             A.HueSaturationValue()
         ]
+        
         self.basic_transform = basic_transform    
         self.to_tensor = transforms.ToTensor()
 
@@ -42,7 +43,7 @@ class BaseDataset(Dataset):
 
         return listInTXT
 
-    def augment_training_data(self, image, depth ,blur):
+    def augment_training_data(self, image, depth):
         H, W, C = image.shape
 
         if self.count % 4 == 0:
@@ -57,26 +58,21 @@ class BaseDataset(Dataset):
             image[:, l:l+w, 1] = depth[:, l:l+w]
             image[:, l:l+w, 2] = depth[:, l:l+w]
 
-        additional_targets = {'depth': 'mask',
-                              'blur':'mask'}
+        additional_targets = {'depth': 'mask'}
         aug = A.Compose(transforms=self.basic_transform,
                         additional_targets=additional_targets)
-        augmented = aug(image=image, depth=depth,blur=blur)
+        augmented = aug(image=image, depth=depth)
         image = augmented['image']
         depth = augmented['depth']
-        blur = augmented['blur']
 
         image = self.to_tensor(image)
         depth = self.to_tensor(depth).squeeze()
-        blur = self.to_tensor(blur).squeeze()
-
         self.count += 1
 
-        return image,depth,blur
+        return image,depth
 
-    def augment_test_data(self, image, depth,blur):
+    def augment_test_data(self, image, depth):
         image = self.to_tensor(image)
         depth = self.to_tensor(depth).squeeze()
-        blur = self.to_tensor(blur).squeeze()
-        return image,depth,blur
+        return image,depth
 

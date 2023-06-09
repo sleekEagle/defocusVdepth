@@ -20,12 +20,12 @@ class SiLogLoss(nn.Module):
 
         return loss
     
-    class MSELoss(nn.Module):
-        def __init__(self, lambd=0.5):
-            super().__init__()
-            self.criterion = torch.nn.MSELoss()
-        def forward(self, pred, target):
-            valid_mask = (target == -1).detach()
-            loss=self.criterion(pred,target)
-            return loss
+class MSELoss(nn.Module):
+    def __init__(self, lambd=0.5):
+        super().__init__()
+        self.criterion = torch.nn.MSELoss()
+    def forward(self, pred, target):
+        valid_mask = (target == -1).detach()
+        loss=self.criterion(pred,target)
+        return loss
 

@@ -21,11 +21,11 @@ metric_name = ['d1', 'd2', 'd3', 'abs_rel', 'sq_rel', 'rmse', 'rmse_log',
 
 def validate_single(val_loader, model, device, args,lowGPU):
     
-    if args.save_eval_pngs or args.save_visualize:
-        result_path = os.path.join(args.result_dir, args.exp_name)
-        # if args.rank == 0:
-        #     logging.check_and_make_dirs(result_path)
-        print("Saving result images in to %s" % result_path)
+    # if args.save_eval_pngs or args.save_visualize:
+    #     result_path = os.path.join(args.result_dir, args.exp_name)
+    #     # if args.rank == 0:
+    #     #     logging.check_and_make_dirs(result_path)
+    #     print("Saving result images in to %s" % result_path)
 
     # if args.rank == 0:
     #     depth_loss = logging.AverageMeter()
@@ -72,7 +72,6 @@ def validate_single(val_loader, model, device, args,lowGPU):
                     c=torch.unsqueeze(class_ids[i],dim=0)
                     pred = model(img, class_ids=c)
                     pred_d = pred['pred_d']
-                    blur=pred['blur']
                     predlist=torch.cat((predlist,pred_d),dim=0)
             else:
                 predlist = model(input_RGB, class_ids=class_ids)['pred_d']
@@ -260,5 +259,5 @@ def validate(val_loader, model, device, args):
 # val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=1,
 #                                              pin_memory=True)
 
-# results_dict = validate_single(val_loader,model,device=device, args=args,lowGPU=False)
+# results_dict = validate_single(val_loader,model,device=device, args=args,lowGPU=True)
 # print(results_dict)
