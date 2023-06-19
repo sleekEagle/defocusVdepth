@@ -32,8 +32,8 @@ class BaseOptions():
         parser.add_argument('--depth_dir',    type=str, default='rawDepth')
         parser.add_argument('--dataset',      type=str, default='nyudepthv2',
                             choices=['nyudepthv2', 'kitti', 'imagepath'])
-        parser.add_argument('--batch_size',   type=int, default=1)
-        parser.add_argument('--workers',      type=int, default=8)
+        parser.add_argument('--batch_size',   type=int, default=4)
+        parser.add_argument('--workers',      type=int, default=1)
         
         # depth configs
         parser.add_argument('--max_depth',      type=float, default=10.0)
@@ -44,7 +44,8 @@ class BaseOptions():
                             choices=['garg_crop', 'eigen_crop'])
         
         #how many filters are used to preict depth out of 192
-        parser.add_argument('--blur_n',     type=int, default=20)
+        parser.add_argument('--blur_n',     type=int, default=192)
+        parser.add_argument('--method',     type=int, default=0)
 
         parser.add_argument('--pretrained',    type=str, default='')
         parser.add_argument('--drop_path_rate',     type=float, default=0.3)

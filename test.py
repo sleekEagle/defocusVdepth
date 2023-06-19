@@ -130,30 +130,23 @@ def validate_single(val_loader, model, device, args,lowGPU):
     return result_metrics
 
 
-def validate(val_loader, model, device, args):
-    
-    if args.save_eval_pngs or args.save_visualize:
-        result_path = os.path.join(args.result_dir, args.exp_name)
-        if args.rank == 0:
-            logging.check_and_make_dirs(result_path)
-        print("Saving result images in to %s" % result_path)
+def validate(val_loader, model, criterion_d, device_id, args):
 
-    if args.rank == 0:
+    if device_id == 0:
         depth_loss = logging.AverageMeter()
     model.eval()
 
-    ddp_logger = utils.MetricLogger()
 
+    ddp_logger = utils.MetricLogger()
     result_metrics = {}
     for metric in metric_name:
         result_metrics[metric] = 0.0
 
     for batch_idx, batch in enumerate(val_loader):
-        input_RGB = batch['image'].to(device)
-        depth_gt = batch['depth'].to(device)
-        filename = batch['filename'][0]
+        input_RGB = batch['image'].to(device_id)
+        depth_gt = batch['depth'].to(device_id)
         class_id = batch['class_id']
-
+        #if(batch_idx>10): break
         with torch.no_grad():
             if args.shift_window_test:
                 bs, _, h, w = input_RGB.shape
@@ -186,44 +179,52 @@ def validate(val_loader, model, device, args):
         pred_d = pred_d.squeeze()
         depth_gt = depth_gt.squeeze()
 
+        loss_d = criterion_d(pred_d.squeeze(), depth_gt)
+
+        ddp_logger.update(loss_d=loss_d.item())
+
+        if device_id == 0:
+            depth_loss.update(loss_d.item(), input_RGB.size(0))
+
         pred_crop, gt_crop = metrics.cropping_img(args, pred_d, depth_gt)
         computed_result = metrics.eval_depth(pred_crop, gt_crop)
-    
-        if args.save_eval_pngs:
-            save_path = os.path.join(result_path, filename)
-            if save_path.split('.')[-1] == 'jpg':
-                save_path = save_path.replace('jpg', 'png')
-            pred_d = pred_d.squeeze()
-            if args.dataset == 'nyudepthv2':
-                pred_d = pred_d.cpu().numpy() * 1000.0
-                cv2.imwrite(save_path, pred_d.astype(np.uint16),
-                            [cv2.IMWRITE_PNG_COMPRESSION, 0])
-            else:
-                pred_d = pred_d.cpu().numpy() * 256.0
-                cv2.imwrite(save_path, pred_d.astype(np.uint16),
-                            [cv2.IMWRITE_PNG_COMPRESSION, 0])
-            
-        if args.save_visualize:
-            save_path = os.path.join(result_path, filename)
-            pred_d_numpy = pred_d.squeeze().cpu().numpy()
-            pred_d_numpy = (pred_d_numpy / pred_d_numpy.max()) * 255
-            pred_d_numpy = pred_d_numpy.astype(np.uint8)
-            pred_d_color = cv2.applyColorMap(pred_d_numpy, cv2.COLORMAP_RAINBOW)
-            cv2.imwrite(save_path, pred_d_color)
+
+        #if rank == 0:
+        #    save_path = os.path.join(result_dir, filename)
+
+        #    if save_path.split('.')[-1] == 'jpg':
+        #        save_path = save_path.replace('jpg', 'png')
+
+        #    if args.save_result:
+        #        if args.dataset == 'kitti':
+        #            pred_d_numpy = pred_d.cpu().numpy() * 256.0
+        #            cv2.imwrite(save_path, pred_d_numpy.astype(np.uint16),
+        #                        [cv2.IMWRITE_PNG_COMPRESSION, 0])
+        #        else:
+        #            pred_d_numpy = pred_d.cpu().numpy() * 1000.0
+        #            cv2.imwrite(save_path, pred_d_numpy.astype(np.uint16),
+        #                        [cv2.IMWRITE_PNG_COMPRESSION, 0])
+
+        #if rank == 0:
+        #    loss_d = depth_loss.avg
+        #    if args.pro_bar:
+        #        logging.progress_bar(batch_idx, len(val_loader), args.epochs, epoch)
 
         ddp_logger.update(**computed_result)
         for key in result_metrics.keys():
             result_metrics[key] += computed_result[key]
 
-    # for key in result_metrics.keys():
-    #     result_metrics[key] = result_metrics[key] / (batch_idx + 1)
+    for key in result_metrics.keys():
+        result_metrics[key] = result_metrics[key] / (batch_idx + 1)
 
-    ddp_logger.synchronize_between_processes()
+    #ddp_logger.synchronize_between_processes()
 
     for key in result_metrics.keys():
         result_metrics[key] = ddp_logger.meters[key].global_avg
 
-    return result_metrics
+    loss_d = ddp_logger.meters['loss_d'].global_avg
+    return result_metrics,loss_d
+
 
 # opt = TestOptions()
 # args = opt.initialize().parse_args()

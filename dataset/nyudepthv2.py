@@ -65,6 +65,7 @@ class nyudepthv2(BaseDataset):
         # gt_path = self.data_path + self.filenames_list[idx].split(' ')[1]
         gt_path=os.path.join(self.depthpath,(str(num)+".png"))
         img_path=os.path.join(self.rgbpath,(str(num)+".png"))
+        #print(img_path)
         # filename = img_path.split('/')[-2] + '_' + img_path.split('/')[-1]
         scene_name=self.scenes[num-1][0][0][:-5]
 
