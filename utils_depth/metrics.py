@@ -14,15 +14,18 @@ def eval_depth(pred, target):
     d1 = torch.sum(thresh < 1.25).float() / len(thresh)
     d2 = torch.sum(thresh < 1.25 ** 2).float() / len(thresh)
     d3 = torch.sum(thresh < 1.25 ** 3).float() / len(thresh)
-
+   
     diff = pred - target
+
     diff_log = torch.log(pred) - torch.log(target)
 
     abs_rel = torch.mean(torch.abs(diff) / target)
     sq_rel = torch.mean(torch.pow(diff, 2) / target)
 
     rmse = torch.sqrt(torch.mean(torch.pow(diff, 2)))
+    
     rmse_log = torch.sqrt(torch.mean(torch.pow(diff_log , 2)))
+
 
     log10 = torch.mean(torch.abs(torch.log10(pred) - torch.log10(target)))
     silog = torch.sqrt(torch.pow(diff_log, 2).mean() - 0.5 * torch.pow(diff_log.mean(), 2))

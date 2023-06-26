@@ -81,7 +81,7 @@ exp_name = '_'.join(name)
 print('This experiments: ', exp_name)
 
 # Dataset setting
-dataset_kwargs = {'dataset_name': args.dataset, 'data_path': args.data_path,'rgb_dir':args.rgb_dir, 'depth_dir':args.depth_dir,'fdist':3.0}
+dataset_kwargs = {'dataset_name': args.dataset, 'data_path': args.data_path,'rgb_dir':args.rgb_dir, 'depth_dir':args.depth_dir, 'fdist':args.fdist}
 dataset_kwargs['crop_size'] = (args.crop_h, args.crop_w)
 
 train_dataset = get_dataset(**dataset_kwargs,is_train=True)
@@ -108,9 +108,31 @@ val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=1,
 criterion_d = SiLogLoss()
 criterion_b=MSELoss()
 print('validating...')
-results_dict,loss_d=test.validate(val_loader, model, criterion_d, device_id, args)
-print(results_dict)
+def vali_dist():
+    if device_id==0:
+        results_dict,loss_d=test.validate_dist(val_loader, model, criterion_d, device_id, args,min_dist=0.0,max_dist=1.0)
+        print("dist : 0-1 " + str(results_dict))
+        results_dict,loss_d=test.validate_dist(val_loader, model, criterion_d, device_id, args,min_dist=1.0,max_dist=2.0)
+        print("dist : 1-2 " + str(results_dict))
 
+    if device_id==1:
+        results_dict,loss_d=test.validate_dist(val_loader, model, criterion_d, device_id, args,min_dist=2.0,max_dist=3.0)
+        print("dist : 2-3 " + str(results_dict))
+        results_dict,loss_d=test.validate_dist(val_loader, model, criterion_d, device_id, args,min_dist=3.0,max_dist=4.0)
+        print("dist : 3-4 " + str(results_dict))
+
+    if device_id==2:
+        results_dict,loss_d=test.validate_dist(val_loader, model, criterion_d, device_id, args,min_dist=4.0,max_dist=5.0)
+        print("dist : 4-5 " + str(results_dict))
+        results_dict,loss_d=test.validate_dist(val_loader, model, criterion_d, device_id, args,min_dist=5.0,max_dist=6.0)
+        print("dist : 5-6 " + str(results_dict))
+
+    if device_id==3:
+        results_dict,loss_d=test.validate_dist(val_loader, model, criterion_d, device_id, args,min_dist=6.0,max_dist=8.0)
+        print("dist : 6-8 " + str(results_dict))
+        results_dict,loss_d=test.validate_dist(val_loader, model, criterion_d, device_id, args,min_dist=8.0,max_dist=10.0)
+        print("dist : 8-10 " + str(results_dict))
+vali_dist()
 dist.barrier()
 print('**************passed barrier**************** rank='+str(rank))
 print('lr='+str(args.max_lr))
@@ -144,5 +166,6 @@ for i in range(1000):
     #print("Elapsed time = %11.1f" %(end-start))    
     if i%10==0:
         print('validating...')
-        results_dict,loss_d=test.validate(val_loader, model, criterion_d, device_id, args)
-        print(results_dict)
+        #results_dict,loss_d=test.validate(val_loader, model, criterion_d, device_id, args)
+        #print(results_dict)
+        vali_dist()
