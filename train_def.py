@@ -45,7 +45,7 @@ train_dataset = get_dataset(**dataset_kwargs,is_train=True)
 val_dataset = get_dataset(**dataset_kwargs, is_train=False)
 
 train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=args.batch_size,
-                                           num_workers=1,pin_memory=True)
+                                           num_workers=0,pin_memory=True)
 
 val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=1,
                                          num_workers=0,pin_memory=True)
@@ -64,10 +64,25 @@ model_params = def_model.parameters()
 #                 constructor='LDMOptimizerConstructor',
 #                 paramwise_cfg=dict(layer_decay_rate=args.layer_decay, no_decay_names=['relative_position_bias_table', 'rpe_mlp', 'logit_scale'])))
 
+# import torch
+# import torch.nn as nn
+
+# class SiLogLoss(nn.Module):
+#     def __init__(self, lambd=0.5):
+#         super().__init__()
+#         self.lambd = lambd
+
+#     def forward(self, pred, target):
+#         valid_mask = (target > 0).detach()
+#         diff_log = torch.log(target[valid_mask]) - torch.log(pred[valid_mask])
+#         loss = torch.sqrt(torch.pow(diff_log, 2).mean() -
+#                           self.lambd * torch.pow(diff_log.mean(), 2))
+
+#         return loss
 criterion_d = SiLogLoss()
 criterion_b=MSELoss()
 
-print('validating...')
+# print('validating...')
 def vali_dist():
     if device_id==0:
         results_dict,loss_d=test.validate_dist(val_loader, def_model, criterion_d, device_id, args,min_dist=0.0,max_dist=1.0,model_name="def")
@@ -109,10 +124,13 @@ def vali_dist():
         results_dict,loss_d=test.validate_dist(val_loader, def_model, criterion_d, device_id, args,min_dist=8.0,max_dist=10.0,model_name="def")
         print("dist : 8-10 " + str(results_dict))
 
-print('lr='+str(args.max_lr))
-print('lr type='+str(type(args.max_lr)))
+# print('lr='+str(args.max_lr))
+# print('lr type='+str(type(args.max_lr)))
 optimizer = optim.AdamW(model_params,lr=args.max_lr, betas=(0.9, 0.999))
 def_model.train()
+
+
+
 #iterate though dataset
 print('train_loader len='+str(len(train_loader)))
 for i in range(1000):
@@ -124,7 +142,7 @@ for i in range(1000):
         class_id = batch['class_id']
         gt_blur = batch['blur'].to(device_id)
 
-        blur_pred,depth_pred = def_model(input_RGB,flag_step2=True)
+        depth_pred,blur_pred = def_model(input_RGB,flag_step2=True)
         optimizer.zero_grad()
 
 
