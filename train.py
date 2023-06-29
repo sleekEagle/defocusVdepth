@@ -28,8 +28,11 @@ from configs.train_options import TrainOptions
 
 import test
 import importlib
-importlib.reload(test)
 import time
+
+from models_depth.AENET import AENet
+
+
 
 metric_name = ['d1', 'd2', 'd3', 'abs_rel', 'sq_rel', 'rmse', 'rmse_log',
                'log10', 'silog']
@@ -99,6 +102,13 @@ train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=args.batch_
 val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=1,
                                          num_workers=0,pin_memory=True)
 
+'''
+import AENET used for defocus blur based depth prediction
+'''
+#ch_inp_num = 3
+#ch_out_num = 1
+#def_model = AENet(ch_inp_num, 1, 16, flag_step2=True).to(rank)
+#model_params = def_model.parameters()
 
 # criterion_d = SiLogLoss()
 # optimizer = build_optimizers(model, dict(type='AdamW', lr=args.max_lr, betas=(0.9, 0.999), weight_decay=args.weight_decay,

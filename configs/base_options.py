@@ -45,7 +45,7 @@ class BaseOptions():
                             choices=['garg_crop', 'eigen_crop'])
         
         #how many filters are used to preict depth out of 192
-        parser.add_argument('--blur_n',     type=int, default=192)
+        parser.add_argument('--blur_n',     type=int, default=20)
         parser.add_argument('--method',     type=int, default=0)
 
         parser.add_argument('--pretrained',    type=str, default='')

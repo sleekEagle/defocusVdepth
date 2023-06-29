@@ -131,7 +131,7 @@ def validate_single(val_loader, model, device, args,lowGPU):
     return result_metrics
 
 
-def validate(val_loader, model, criterion_d, device_id, args):
+def validate(val_loader, model, criterion_d, device_id, args,model_name):
 
     if device_id == 0:
         depth_loss = logging.AverageMeter()
@@ -166,8 +166,11 @@ def validate(val_loader, model, criterion_d, device_id, args):
             if args.flip_test:
                 input_RGB = torch.cat((input_RGB, torch.flip(input_RGB, [3])), dim=0)
                 class_ids = torch.cat((class_ids, class_ids), dim=0)
-            pred = model(input_RGB, class_ids=class_ids)
-        pred_d = pred['pred_d']
+            if model_name=="def":
+                pred_b,pred_d = model(input_RGB,flag_step2=True)
+            else:
+                pred = model(input_RGB, class_ids=class_ids)
+                pred_d = pred['pred_d']
         if args.flip_test:
             batch_s = pred_d.shape[0]//2
             pred_d = (pred_d[:batch_s] + torch.flip(pred_d[batch_s:], [3]))/2.0
@@ -229,7 +232,7 @@ def validate(val_loader, model, criterion_d, device_id, args):
 
 
 #provides distance wise error
-def validate_dist(val_loader, model, criterion_d, device_id, args,min_dist=0.0,max_dist=10.0):
+def validate_dist(val_loader, model, criterion_d, device_id, args,min_dist=0.0,max_dist=10.0,model_name=None):
 
     if device_id == 0:
         depth_loss = logging.AverageMeter()
@@ -264,8 +267,11 @@ def validate_dist(val_loader, model, criterion_d, device_id, args,min_dist=0.0,m
             if args.flip_test:
                 input_RGB = torch.cat((input_RGB, torch.flip(input_RGB, [3])), dim=0)
                 class_ids = torch.cat((class_ids, class_ids), dim=0)
-            pred = model(input_RGB, class_ids=class_ids)
-        pred_d = pred['pred_d']
+            if model_name=="def":
+                pred_b,pred_d = model(input_RGB,flag_step2=True)
+            else:
+                pred = model(input_RGB, class_ids=class_ids)
+                pred_d = pred['pred_d']
         if args.flip_test:
             batch_s = pred_d.shape[0]//2
             pred_d = (pred_d[:batch_s] + torch.flip(pred_d[batch_s:], [3]))/2.0
