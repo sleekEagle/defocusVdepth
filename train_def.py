@@ -45,8 +45,7 @@ if not os.path.exists(args.resultspth):
 now = datetime.now()
 dt_string = now.strftime("%d-%m-%Y_%H_%M_%S")+'.log'
 logpath=join(args.resultspth,dt_string)
-logging.basicConfig(filename=logpath, format='%(levelname)s:%(asctime)s:%(message)s', datefmt='%m/%d/%Y %I:%M:%S %p',
-                    filemode='w',encoding='utf-8', level=logging.INFO)
+logging.basicConfig(filename=logpath, format='%(levelname)s:%(asctime)s:%(message)s', datefmt='%m/%d/%Y %I:%M:%S %p',filemode='w',encoding='utf-8', level=logging.INFO)
 logging.info('Starting training')
 logging.info(args)
 
