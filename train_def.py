@@ -53,7 +53,7 @@ logpath=join(args.resultspth,dt_string)
 # logger.addHandler(handler)
 
 
-logging.basicConfig(filename=logpath,filemode='w',encoding='utf-8', level=logging.INFO)
+logging.basicConfig(filename=logpath,filemode='w', level=logging.INFO)
 logging.info('Starting training')
 logging.info(args)
 
