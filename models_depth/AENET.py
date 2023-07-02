@@ -113,6 +113,8 @@ class AENet(nn.Module):
                 conv = self.__getattr__('conv_down_' + str(j+0))(joint_pool)
                 down_temp.append(conv)
 
+                # print('after counv down:'+str(conv.shape))
+
                 pool = self.__getattr__('pool_' + str(j+0))(conv)
                 pool_temp.append(pool)
 
@@ -127,8 +129,9 @@ class AENet(nn.Module):
         bridge = []
         for i in range(k):
             join_pool = torch.cat([pool_temp[i], pool_max[0]], dim=1)
+            # print('before bnridge:'+str(join_pool.shape))
             bridge.append(self.bridge(join_pool))
-
+            # print('after bnridge:'+str(bridge[i].shape))
 
         up_temp = []
         for j in range(self.n_blocks+2):

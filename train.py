@@ -96,7 +96,14 @@ sampler_train = torch.utils.data.DistributedSampler(
 sampler_val = torch.utils.data.DistributedSampler(
         val_dataset, num_replicas=1, rank=0, shuffle=False)
 
-train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=args.batch_size,sampler=sampler_train,
+# train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=args.batch_size,sampler=sampler_train,
+#                                            num_workers=1,pin_memory=True)
+
+# val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=1,
+#                                          num_workers=0,pin_memory=True)
+
+
+train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=args.batch_size,
                                            num_workers=1,pin_memory=True)
 
 val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=1,
