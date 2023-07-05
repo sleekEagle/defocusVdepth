@@ -4,3 +4,6 @@ nyu_depth_v2/
 *.pyc
 stable-diffusion/
 ckpt/
+*.log
+*.err
+*.out
