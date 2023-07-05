@@ -134,8 +134,7 @@ def vali_dist():
         results_dict,loss_d=test.validate_dist(val_loader, def_model, criterion_d, device_id, args,min_dist=8.0,max_dist=10.0,model_name="def")
         print("dist : 8-10 " + str(results_dict))
 
-# print('lr='+str(args.max_lr))
-# print('lr type='+str(type(args.max_lr)))
+print('lr='+str(args.max_lr))
 optimizer = optim.AdamW(model_params,lr=args.max_lr, betas=(0.9, 0.999))
 def_model.train()
 

@@ -220,6 +220,7 @@ class AENet(nn.Module):
             end2 = self.conv_end2(unpool_max[0])
             out_step2 = self.conv_out2(end2)
             out_step2=torch.sigmoid(out_step2)
+            out_step2=out_step2*10.0
 
         if flag_step2:
             return out_step2, out
