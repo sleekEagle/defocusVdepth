@@ -169,7 +169,7 @@ for i in range(1000):
         if(torch.isnan(loss_d) or torch.isnan(loss_b)):
             print('nan in losses')
             logging.info('nan in losses')
-            break
+            continue
         loss=loss_d+loss_b
         total_d_loss+=loss_d.item()
         total_b_loss+=loss_b.item()
