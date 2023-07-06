@@ -150,9 +150,24 @@ for i in range(1000):
         depth_gt = batch['depth'].to(device_id)
         class_id = batch['class_id']
         gt_blur = batch['blur'].to(device_id)
-
         depth_pred,blur_pred = def_model(input_RGB,flag_step2=True)
+
         optimizer.zero_grad()
+
+        # import matplotlib.pyplot as plt
+        # img=input_RGB[0,0,:,:].cpu().numpy()
+        # # img=np.swapaxes(img,0,2)
+        # d=depth_gt[0,:,:].cpu().numpy()
+        # b=gt_blur[0,:,:].cpu().numpy()
+
+        # # plt.figure()
+        # f, axarr = plt.subplots(3,1)
+        # axarr[0].imshow(img) 
+        # axarr[1].imshow(d) 
+        # axarr[2].imshow(b)
+        # plt.show() 
+
+
 
 
         # pred=depth_pred.squeeze(dim=1)
@@ -163,9 +178,9 @@ for i in range(1000):
         # loss = torch.sqrt(torch.pow(diff_log, 2).mean() -
         #                   0.5 * torch.pow(diff_log.mean(), 2))
 
-
-        loss_d=criterion_d(depth_pred.squeeze(dim=1), depth_gt)
-        loss_b=criterion_b(blur_pred.squeeze(dim=1),gt_blur)
+        mask=(depth_gt>0).detach_()
+        loss_d=criterion_d(depth_pred.squeeze(dim=1)[mask], depth_gt[mask])
+        loss_b=criterion_b(blur_pred.squeeze(dim=1)[mask],gt_blur[mask])
         if(torch.isnan(loss_d) or torch.isnan(loss_b)):
             print('nan in losses')
             logging.info('nan in losses')
@@ -200,5 +215,6 @@ for i in range(1000):
                 'optimize':optimizer.state_dict(),
                 },  os.path.abspath(args.resultspth)+'/model_{}.tar'.format(i))
                 logging.info("saved model")
+        def_model.train()
             
 
