@@ -13,7 +13,6 @@ import numpy as np
 
 def get_blur(s1,s2):
     blur=torch.abs(s2-s1)/s2
-    blur[s2==0]=-1
     return blur
 
 class nyudepthv2(BaseDataset):

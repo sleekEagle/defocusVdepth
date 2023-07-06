@@ -25,7 +25,7 @@ class MSELoss(nn.Module):
         super().__init__()
         self.criterion = torch.nn.MSELoss()
     def forward(self, pred, target):
-        valid_mask = (target>0).detach()
+        valid_mask = (target>=0.0).detach()
         loss=self.criterion(pred[valid_mask],target[valid_mask])
         return loss
 

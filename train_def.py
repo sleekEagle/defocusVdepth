@@ -79,8 +79,7 @@ ch_out_num = 1
 def_model = AENet(ch_inp_num, 1, 16, flag_step2=True).to(device_id)
 model_params = def_model.parameters()
 
-criterion_d = SiLogLoss()
-criterion_b=MSELoss()
+criterion=torch.nn.MSELoss()
 
 # print('validating...')
 def vali_dist():
@@ -179,8 +178,8 @@ for i in range(1000):
         #                   0.5 * torch.pow(diff_log.mean(), 2))
 
         mask=(depth_gt>0).detach_()
-        loss_d=criterion_d(depth_pred.squeeze(dim=1)[mask], depth_gt[mask])
-        loss_b=criterion_b(blur_pred.squeeze(dim=1)[mask],gt_blur[mask])
+        loss_d=criterion(depth_pred.squeeze(dim=1)[mask], depth_gt[mask])
+        loss_b=criterion(blur_pred.squeeze(dim=1)[mask],gt_blur[mask])
         if(torch.isnan(loss_d) or torch.isnan(loss_b)):
             print('nan in losses')
             logging.info('nan in losses')
