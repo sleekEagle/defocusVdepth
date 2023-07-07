@@ -1,11 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Aug 29 14:54:12 2018
-
-coppied from Maxomov
-"""
-
 
 import torch
 import torch.nn as nn
@@ -45,7 +37,7 @@ class AENet(nn.Module):
         )
 
         if flag_step2:
-            self.conv_down2_0 = self.convsblocks(1, self.num_filter * 1, act_fnc)
+            self.conv_down2_0 = self.convsblocks(2, self.num_filter * 1, act_fnc)
             self.pool2_0 = self.poolblock()
 
 
@@ -109,11 +101,9 @@ class AENet(nn.Module):
                     pool_temp.pop(0)
                 else:
                     joint_pool = x[:, inp * i:inp * (i + 1), :, :]
-                
+
                 conv = self.__getattr__('conv_down_' + str(j+0))(joint_pool)
                 down_temp.append(conv)
-
-                # print('after counv down:'+str(conv.shape))
 
                 pool = self.__getattr__('pool_' + str(j+0))(conv)
                 pool_temp.append(pool)
@@ -129,9 +119,7 @@ class AENet(nn.Module):
         bridge = []
         for i in range(k):
             join_pool = torch.cat([pool_temp[i], pool_max[0]], dim=1)
-            # print('before bnridge:'+str(join_pool.shape))
             bridge.append(self.bridge(join_pool))
-            # print('after bnridge:'+str(bridge[i].shape))
 
         up_temp = []
         for j in range(self.n_blocks+2):
@@ -171,10 +159,7 @@ class AENet(nn.Module):
                         joint_pool = torch.cat([pool_temp[0], pool_max[0]], dim=1)
                         pool_temp.pop(0)
                     else:
-                        #print('out:'+str(out.shape))
-                        #print('x2:'+str(x2.shape))
-                        joint_pool = out[:, 1 * i:1 * (i + 1), :, :]
-                        #print('jointpool:'+str(joint_pool.shape))
+                        joint_pool = torch.cat([out[:, 1 * i:1 * (i + 1), :, :],x2[:, 1 * i:1 * (i + 1), :, :]], dim=1)
 
                     conv = self.__getattr__('conv_down2_' + str(j + 0))(joint_pool)
                     down_temp.append(conv)
@@ -219,11 +204,8 @@ class AENet(nn.Module):
 
             end2 = self.conv_end2(unpool_max[0])
             out_step2 = self.conv_out2(end2)
-            # out_step2=torch.sigmoid(out_step2)
-            out_step2=out_step2*10.0
 
         if flag_step2:
             return out_step2, out
         else:
             return out
-
