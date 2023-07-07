@@ -221,33 +221,35 @@ for i in range(1000):
         rmse_total=0
         n=0
         with torch.no_grad():
-            for batch_idx, batch in enumerate(val_loader):
-                input_RGB = batch['image'].to(device_id)
-                depth_gt = batch['depth'].to(device_id)
-                class_id = batch['class_id']
-                gt_blur = batch['blur'].to(device_id)
+            # for batch_idx, batch in enumerate(val_loader):
+            #     input_RGB = batch['image'].to(device_id)
+            #     depth_gt = batch['depth'].to(device_id)
+            #     class_id = batch['class_id']
+            #     gt_blur = batch['blur'].to(device_id)
 
-                s1_fcs = torch.ones([input_RGB.shape[0],1, input_RGB.shape[2], input_RGB.shape[3]])
-                s1_fcs*=args.fdist
-                s1_fcs = s1_fcs.float().to(device_id)
-                depth_pred,blur_pred = def_model(input_RGB,flag_step2=True,x2=s1_fcs)
+            #     s1_fcs = torch.ones([input_RGB.shape[0],1, input_RGB.shape[2], input_RGB.shape[3]])
+            #     s1_fcs*=args.fdist
+            #     s1_fcs = s1_fcs.float().to(device_id)
+            #     depth_pred,blur_pred = def_model(input_RGB,flag_step2=True,x2=s1_fcs)
 
-                mask=(torch.squeeze(depth_gt)>0)*(torch.squeeze(depth_gt)<2).detach_()
-                #calc rmse
-                diff=torch.squeeze(depth_gt)-torch.squeeze(depth_pred)
-                rmse=torch.sqrt(torch.mean(torch.pow(diff[mask],2))).item()
-                if(rmse!=rmse):
-                    continue
-                rmse_total+=rmse
-                n+=1
-            print("val RMSE = %2.5f" %(rmse_total/n))
-            logging.info("val RMSE = " +str(rmse_total/n))
+            #     mask=(torch.squeeze(depth_gt)>0)*(torch.squeeze(depth_gt)<2).detach_()
+            #     #calc rmse
+            #     diff=torch.squeeze(depth_gt)-torch.squeeze(depth_pred)
+            #     rmse=torch.sqrt(torch.mean(torch.pow(diff[mask],2))).item()
+            #     if(rmse!=rmse):
+            #         continue
+            #     rmse_total+=rmse
+            #     n+=1
+            # print("val RMSE = %2.5f" %(rmse_total/n))
+            # logging.info("val RMSE = " +str(rmse_total/n))
+            results_dict,loss_d=test.validate_dist(val_loader, def_model, criterion, device_id, args,min_dist=0.0,max_dist=2.0,model_name="def")
             # results_dict,loss_d=test.validate_dist(val_loader, def_model, criterion, device_id, args,min_dist=0.0,max_dist=1.0,model_name="def")
-            # print("dist : 0-1 " + str(results_dict))
-            # logging.info("dist : 0-1 " + str(results_dict))
+            print("dist : 0-2 " + str(results_dict))
+            logging.info("dist : 0-2 " + str(results_dict))
             # results_dict,loss_d=test.validate_dist(val_loader, def_model, criterion, device_id, args,min_dist=1.0,max_dist=2.0,model_name="def")
             # print("dist : 1-2 " + str(results_dict))
             # logging.info("dist : 1-2 " + str(results_dict))
         def_model.train()
+
             
 
