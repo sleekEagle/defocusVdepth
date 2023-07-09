@@ -139,10 +139,11 @@ def_model.train()
 #iterate though dataset
 print('train_loader len='+str(len(train_loader)))
 logging.info('train_loader len=%s',str(len(train_loader)))
+evalitr=10
+best_loss=0
 for i in range(1000):
     total_d_loss,total_b_loss=0,0
     start = time.time()
-    best_loss=0
     for batch_idx, batch in enumerate(train_loader):
         input_RGB = batch['image'].to(device_id)
         depth_gt = batch['depth'].to(device_id)
@@ -198,25 +199,11 @@ for i in range(1000):
     end = time.time()    
 
     #print("Elapsed time = %11.1f" %(end-start))    
-    if (i+1)%10==0:
+    if (i+1)%evalitr==0:
         # print('validating...')
         # results_dict,loss_d=test.validate_dist(val_loader, def_model, criterion_d, device_id, args,min_dist=0.0,max_dist=1.0,model_name="def")
         # print(results_dict)
         # rmse=vali_dist()
-        # if(i==0):
-        #     best_loss=rmse
-        # else:
-        #     if rmse<best_loss:
-        #         best_loss=rmse
-        #         #save model
-        #         torch.save({
-        #         'epoch': i + 1,
-        #         'iters': i + 1,
-        #         'best': best_loss,
-        #         'state_dict': def_model.state_dict(),
-        #         'optimize':optimizer.state_dict(),
-        #         },  os.path.abspath(args.resultspth)+'/model_{}.tar'.format(i))
-        #         logging.info("saved model")
         def_model.eval()
         rmse_total=0
         n=0
@@ -234,7 +221,7 @@ for i in range(1000):
 
             #     mask=(torch.squeeze(depth_gt)>0)*(torch.squeeze(depth_gt)<2).detach_()
             #     #calc rmse
-            #     diff=torch.squeeze(depth_gt)-torch.squeeze(depth_pred)
+            #     diff=torch.squeeze(depth_gt)-torch.psqueeze(depth_pred)
             #     rmse=torch.sqrt(torch.mean(torch.pow(diff[mask],2))).item()
             #     if(rmse!=rmse):
             #         continue
@@ -246,9 +233,22 @@ for i in range(1000):
             # results_dict,loss_d=test.validate_dist(val_loader, def_model, criterion, device_id, args,min_dist=0.0,max_dist=1.0,model_name="def")
             print("dist : 0-2 " + str(results_dict))
             logging.info("dist : 0-2 " + str(results_dict))
-            # results_dict,loss_d=test.validate_dist(val_loader, def_model, criterion, device_id, args,min_dist=1.0,max_dist=2.0,model_name="def")
-            # print("dist : 1-2 " + str(results_dict))
-            # logging.info("dist : 1-2 " + str(results_dict))
+            rmse=results_dict['rmse']
+            if(i+1==evalitr):
+                best_loss=rmse
+            else:
+                if rmse<best_loss:
+                    best_loss=rmse
+                    #save model
+                    torch.save({
+                    'epoch': i + 1,
+                    'iters': i + 1,
+                    'best': best_loss,
+                    'state_dict': def_model.state_dict(),
+                    'optimize':optimizer.state_dict(),
+                    },  os.path.abspath(args.resultspth)+'/model.tar')
+                    logging.info("saved model")
+                    print('model saved')
         def_model.train()
 
             
