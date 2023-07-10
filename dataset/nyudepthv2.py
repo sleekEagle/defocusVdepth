@@ -33,7 +33,7 @@ class nyudepthv2(BaseDataset):
         self.rgbpath=os.path.join(self.data_path,rgb_dir)
         self.depthpath=os.path.join(self.data_path,depth_dir)
         # rgbpath="C:\\Users\\lahir\\data\\nyu_depth_v2\\f_25\\"
-        self.rgbdirs=dirs=list(next(os.walk(self.rgbpath))[1])
+        self.rgbdirs=list(next(os.walk(self.rgbpath))[1])
         
         #read scene names
         scene_path=os.path.join(self.data_path, 'scenes.mat')
