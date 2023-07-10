@@ -37,8 +37,8 @@ class nyudepthv2(BaseDataset):
         if(selected_dirs and selected_dirs[0]!=-1):                
             tmp=self.rgbdirs
             tmp.sort()
-            newllist=[tmp[item] for item in selected_dirs]
-            self.rgbdirs=newllist
+            newlist=[tmp[item] for item in selected_dirs]
+            self.rgbdirs=newlist
         
         #read scene names
         scene_path=os.path.join(self.data_path, 'scenes.mat')
