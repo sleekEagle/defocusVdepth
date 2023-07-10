@@ -149,9 +149,11 @@ for i in range(1000):
         depth_gt = batch['depth'].to(device_id)
         class_id = batch['class_id']
         gt_blur = batch['blur'].to(device_id)
+        fdist=batch['fdist']
 
         s1_fcs = torch.ones([input_RGB.shape[0],1, input_RGB.shape[2], input_RGB.shape[3]])
-        s1_fcs*=args.fdist
+        for fd_,fd in enumerate(fdist):
+            s1_fcs[fd_,:,:,:]=fd.item()
         s1_fcs = s1_fcs.float().to(device_id)
         depth_pred,blur_pred = def_model(input_RGB,flag_step2=True,x2=s1_fcs)
 

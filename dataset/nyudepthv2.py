@@ -10,6 +10,7 @@ import json
 import scipy
 import torch
 import numpy as np
+import random
 
 def get_blur(s1,s2):
     blur=torch.abs(s2-s1)/s2
@@ -31,6 +32,8 @@ class nyudepthv2(BaseDataset):
         self.data_path = os.path.join(data_path, 'nyu_depth_v2')
         self.rgbpath=os.path.join(self.data_path,rgb_dir)
         self.depthpath=os.path.join(self.data_path,depth_dir)
+        # rgbpath="C:\\Users\\lahir\\data\\nyu_depth_v2\\f_25\\"
+        self.rgbdirs=dirs=list(next(os.walk(self.rgbpath))[1])
         
         #read scene names
         scene_path=os.path.join(self.data_path, 'scenes.mat')
@@ -61,10 +64,14 @@ class nyudepthv2(BaseDataset):
         # num=int(self.filenames_list[idx].split(' ')[0].split('/')[-1].split('.')[-2].split('_')[-1])
         # img_path = self.data_path + self.filenames_list[idx].split(' ')[0]
         num=self.file_idx[idx]
+        #select a directory in random
+        rgbdir=random.choice(self.rgbdirs)
+        #rgbdir='refocused_f_25_fdist_1'
+        fdist=int(rgbdir.split('_')[-1])
         # gt_path = self.data_path + self.filenames_list[idx].split(' ')[1]
         gt_path=os.path.join(self.depthpath,(str(num)+".png"))
-        img_path=os.path.join(self.rgbpath,(str(num)+".png"))
-        #print(img_path)
+        img_path=os.path.join(self.rgbpath,rgbdir,(str(num)+".png"))
+        print(img_path)
         # filename = img_path.split('/')[-2] + '_' + img_path.split('/')[-1]
         scene_name=self.scenes[num-1][0][0][:-5]
 
@@ -90,7 +97,7 @@ class nyudepthv2(BaseDataset):
 
         depth = depth / 1000.0  # convert in meters
         blur=get_blur(self.fdist,depth)
-        return {'image': image, 'depth': depth, 'blur':blur, 'class_id': class_id}
+        return {'image': image, 'depth': depth, 'blur':blur, 'class_id': class_id,'fdist':fdist}
 
 # for st_iter, sample_batch in enumerate(loader):
 #         input_RGB = sample_batch['image']
