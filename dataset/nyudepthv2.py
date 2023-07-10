@@ -15,9 +15,9 @@ import random
 def get_blur(s1,s2):
     blur=torch.abs(s2-s1)/s2
     return blur
-
+#selected_dirs: what rgb directories are being selected : a list of indices of sorted dir names
 class nyudepthv2(BaseDataset):
-    def __init__(self, data_path, rgb_dir,depth_dir,filenames_path='./dataset/filenames/',
+    def __init__(self, data_path, rgb_dir,depth_dir,filenames_path='./dataset/filenames/',selected_dirs=None,
                  is_train=True, crop_size=(448, 576), scale_size=None,fdist=2.0):
         super().__init__(crop_size)
 
@@ -34,6 +34,11 @@ class nyudepthv2(BaseDataset):
         self.depthpath=os.path.join(self.data_path,depth_dir)
         # rgbpath="C:\\Users\\lahir\\data\\nyu_depth_v2\\f_25\\"
         self.rgbdirs=list(next(os.walk(self.rgbpath))[1])
+        if(selected_dirs and selected_dirs[0]!=-1):                
+            tmp=self.rgbdirs
+            tmp.sort()
+            newllist=[tmp[item] for item in selected_dirs]
+            self.rgbdirs=newllist
         
         #read scene names
         scene_path=os.path.join(self.data_path, 'scenes.mat')
@@ -71,7 +76,7 @@ class nyudepthv2(BaseDataset):
         # gt_path = self.data_path + self.filenames_list[idx].split(' ')[1]
         gt_path=os.path.join(self.depthpath,(str(num)+".png"))
         img_path=os.path.join(self.rgbpath,rgbdir,(str(num)+".png"))
-        # print(img_path)
+        print(img_path)
         # filename = img_path.split('/')[-2] + '_' + img_path.split('/')[-1]
         scene_name=self.scenes[num-1][0][0][:-5]
 
