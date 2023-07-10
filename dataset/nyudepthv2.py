@@ -33,11 +33,12 @@ class nyudepthv2(BaseDataset):
         self.rgbpath=os.path.join(self.data_path,rgb_dir)
         self.depthpath=os.path.join(self.data_path,depth_dir)
         # rgbpath="C:\\Users\\lahir\\data\\nyu_depth_v2\\f_25\\"
+        print("selected dirs:"+str(selected_dirs))
         self.rgbdirs=list(next(os.walk(self.rgbpath))[1])
         if(selected_dirs and selected_dirs[0]!=-1):                
             tmp=self.rgbdirs
             tmp.sort()
-            newlist=[tmp[item] for item in selected_dirs]
+            newlist=[tmp[int(item)] for item in selected_dirs]
             self.rgbdirs=newlist
         
         #read scene names
