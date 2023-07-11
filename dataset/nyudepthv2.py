@@ -13,7 +13,7 @@ import numpy as np
 import random
 
 def get_blur(s1,s2):
-    blur=torch.abs(s2-s1)/s2
+    blur=torch.abs(s2-s1)/s2*1/(s1-25e-3)
     return blur
 #selected_dirs: what rgb directories are being selected : a list of indices of sorted dir names
 class nyudepthv2(BaseDataset):
