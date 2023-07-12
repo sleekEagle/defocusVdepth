@@ -17,7 +17,7 @@ def get_blur(s1,s2):
 
 class nyudepthv2(BaseDataset):
     def __init__(self, data_path, rgb_dir,depth_dir,filenames_path='./dataset/filenames/',
-                 is_train=True, crop_size=(448, 576), scale_size=None,fdist=2.0):
+                 is_train=True, crop_size=(448, 576), scale_size=None):
         super().__init__(crop_size)
 
 
@@ -25,7 +25,6 @@ class nyudepthv2(BaseDataset):
             scale_size = (int(crop_size[0]*640/480), crop_size[0])
 
         self.scale_size = scale_size
-        self.fdist=fdist
 
         self.is_train = is_train
         self.data_path = os.path.join(data_path, 'nyu_depth_v2')
