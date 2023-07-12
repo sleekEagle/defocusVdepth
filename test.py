@@ -147,6 +147,7 @@ def validate(val_loader, model, criterion_d, device_id, args,model_name):
         input_RGB = batch['image'].to(device_id)
         depth_gt = batch['depth'].to(device_id)
         class_id = batch['class_id']
+        fdist=batch['fdist']
         #if(batch_idx>10): break
         with torch.no_grad():
             if args.shift_window_test:
@@ -167,7 +168,11 @@ def validate(val_loader, model, criterion_d, device_id, args,model_name):
                 input_RGB = torch.cat((input_RGB, torch.flip(input_RGB, [3])), dim=0)
                 class_ids = torch.cat((class_ids, class_ids), dim=0)
             if model_name=="def":
-                pred_b,pred_d = model(input_RGB,flag_step2=True)
+                s1_fcs = torch.ones([input_RGB.shape[0],1, input_RGB.shape[2], input_RGB.shape[3]])
+                for fd_,fd in enumerate(fdist):
+                    s1_fcs[fd_,:,:,:]=fd.item()
+                s1_fcs = s1_fcs.float().to(device_id)
+                pred_d,pred_b = model(input_RGB,flag_step2=True,x2=s1_fcs)
             else:
                 pred = model(input_RGB, class_ids=class_ids)
                 pred_d = pred['pred_d']

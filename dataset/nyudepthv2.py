@@ -10,19 +10,16 @@ import json
 import scipy
 import torch
 import numpy as np
+import random
 
+#f in mm
 def get_blur(s1,s2,f):
-    blur=torch.abs(s2-s1)/s2*1/(s1-f)
+    blur=torch.abs(s2-s1)/s2*1/(s1-f*1e-3)
     return blur
 
-<<<<<<< Updated upstream
-class nyudepthv2(BaseDataset):
-    def __init__(self, data_path, rgb_dir,depth_dir,filenames_path='./dataset/filenames/',
-=======
 #selected_dirs: what rgb directories are being selected : a list of indices of sorted dir names
 class nyudepthv2(BaseDataset):
     def __init__(self, data_path, rgb_dir,depth_dir,filenames_path='./dataset/filenames/',selected_dirs=None,
->>>>>>> Stashed changes
                  is_train=True, crop_size=(448, 576), scale_size=None):
         super().__init__(crop_size)
 
@@ -31,14 +28,18 @@ class nyudepthv2(BaseDataset):
             scale_size = (int(crop_size[0]*640/480), crop_size[0])
 
         self.scale_size = scale_size
-<<<<<<< Updated upstream
-
-=======
->>>>>>> Stashed changes
         self.is_train = is_train
         self.data_path = os.path.join(data_path, 'nyu_depth_v2')
         self.rgbpath=os.path.join(self.data_path,rgb_dir)
         self.depthpath=os.path.join(self.data_path,depth_dir)
+        # rgbpath="C:\\Users\\lahir\\data\\nyu_depth_v2\\f_25\\"
+        print("selected dirs:"+str(selected_dirs))
+        self.rgbdirs=list(next(os.walk(self.rgbpath))[1])
+        if(selected_dirs and selected_dirs[0]!=-1):                
+            tmp=self.rgbdirs
+            tmp.sort()
+            newlist=[tmp[int(item)] for item in selected_dirs]
+            self.rgbdirs=newlist
         
         #read scene names
         scene_path=os.path.join(self.data_path, 'scenes.mat')
@@ -69,21 +70,17 @@ class nyudepthv2(BaseDataset):
         # num=int(self.filenames_list[idx].split(' ')[0].split('/')[-1].split('.')[-2].split('_')[-1])
         # img_path = self.data_path + self.filenames_list[idx].split(' ')[0]
         num=self.file_idx[idx]
-<<<<<<< Updated upstream
-        # gt_path = self.data_path + self.filenames_list[idx].split(' ')[1]
-        gt_path=os.path.join(self.depthpath,(str(num)+".png"))
-        img_path=os.path.join(self.rgbpath,(str(num)+".png"))
-        #print(img_path)
-=======
         #select a directory in random
         rgbdir=random.choice(self.rgbdirs)
         #rgbdir='refocused_f_25_fdist_1'
         fdist=int(rgbdir.split('_')[-1])
         f=int(rgbdir.split('_')[2])
+        # print(rgbdir)
+        # print('f:'+str(f))
+        # print('fdist:'+str(fdist))
         # gt_path = self.data_path + self.filenames_list[idx].split(' ')[1]
         gt_path=os.path.join(self.depthpath,(str(num)+".png"))
         img_path=os.path.join(self.rgbpath,rgbdir,(str(num)+".png"))
->>>>>>> Stashed changes
         # filename = img_path.split('/')[-2] + '_' + img_path.split('/')[-1]
         scene_name=self.scenes[num-1][0][0][:-5]
 
@@ -108,13 +105,8 @@ class nyudepthv2(BaseDataset):
             image,depth = self.augment_test_data(image, depth)
 
         depth = depth / 1000.0  # convert in meters
-<<<<<<< Updated upstream
-        blur=get_blur(self.fdist,depth)
-        return {'image': image, 'depth': depth, 'blur':blur, 'class_id': class_id}
-=======
         blur=get_blur(fdist,depth,f)
         return {'image': image, 'depth': depth, 'blur':blur, 'class_id': class_id,'fdist':fdist}
->>>>>>> Stashed changes
 
 # for st_iter, sample_batch in enumerate(loader):
 #         input_RGB = sample_batch['image']
@@ -132,7 +124,7 @@ class nyudepthv2(BaseDataset):
 # d=(depth_gt.numpy())[0,:,:]
 # plt.imshow(d)
 # plt.show()
-    
+
 def get_loader_stats(loader):
     print('getting NUY v2 stats...')
     xmin,xmax,xmean,count=100,0,0,0
@@ -153,7 +145,8 @@ def get_loader_stats(loader):
             xmax=xmax_
         xmean+=torch.mean(input_RGB).cpu().item()
         count+=1
-        depth_gt=depth_gt[depth_gt>0]
+        mask=depth_gt>0
+        depth_gt=depth_gt[mask]
         t=torch.flatten(depth_gt)
         depthlist=torch.concat((depthlist,t),axis=0)
         depthmin_=torch.min(depth_gt).cpu().item()
@@ -163,8 +156,7 @@ def get_loader_stats(loader):
         if(depthmax_>depthmax):
             depthmax=depthmax_
         depthmean+=torch.mean(depth_gt).cpu().item()
-
-        gt_blur=gt_blur[gt_blur>-1]
+        gt_blur=gt_blur[mask]
         blurmin_=torch.min(gt_blur).cpu().item()
         if(blurmin_<blurmin):
             blurmin=blurmin_
@@ -189,20 +181,23 @@ def get_loader_stats(loader):
 
 # from configs.train_options import TrainOptions
 # from dataset.base_dataset import get_dataset
+# import torch
+
 # opt = TrainOptions()
 # args = opt.initialize().parse_args()
 # args.shift_window_test=True
 # args.flip_test=True
 
-# dataset_kwargs = {'dataset_name': args.dataset, 'data_path': args.data_path,'rgb_dir':args.rgb_dir, 'depth_dir':args.depth_dir,'fdist':3.0}
+# dataset_kwargs = {'dataset_name': args.dataset, 'data_path': args.data_path,'rgb_dir':args.rgb_dir, 'depth_dir':args.depth_dir,
+#                   'selected_dirs':args.selected_dirs}
 # dataset_kwargs['crop_size'] = (args.crop_h, args.crop_w)
 
 # train_dataset = get_dataset(**dataset_kwargs,is_train=True)
-# val_dataset = get_dataset(**dataset_kwargs, is_train=False)
+# # val_dataset = get_dataset(**dataset_kwargs, is_train=False)
 
 
 # train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=1,pin_memory=True)
-# val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=1,pin_memory=True)
+# # val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=1,pin_memory=True)
 # loader=train_loader
 
 # get_loader_stats(loader)

@@ -58,7 +58,8 @@ logging.info('Starting training')
 logging.info(args)
 
 # Dataset setting
-dataset_kwargs = {'dataset_name': args.dataset, 'data_path': args.data_path,'rgb_dir':args.rgb_dir, 'depth_dir':args.depth_dir}
+dataset_kwargs = {'dataset_name': args.dataset, 'data_path': args.data_path,'rgb_dir':args.rgb_dir, 'depth_dir':args.depth_dir,
+                  'selected_dirs':args.selected_dirs}
 dataset_kwargs['crop_size'] = (args.crop_h, args.crop_w)
 
 train_dataset = get_dataset(**dataset_kwargs,is_train=True)
@@ -152,8 +153,8 @@ for i in range(1000):
         fdist=batch['fdist']
 
         s1_fcs = torch.ones([input_RGB.shape[0],1, input_RGB.shape[2], input_RGB.shape[3]])
-        # for fd_,fd in enumerate(fdist):
-        #     s1_fcs[fd_,:,:,:]=fd.item()
+        for fd_,fd in enumerate(fdist):
+            s1_fcs[fd_,:,:,:]=fd.item()
         s1_fcs = s1_fcs.float().to(device_id)
         depth_pred,blur_pred = def_model(input_RGB,flag_step2=True,x2=s1_fcs)
 
