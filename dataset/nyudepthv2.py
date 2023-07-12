@@ -75,6 +75,8 @@ class nyudepthv2(BaseDataset):
         #rgbdir='refocused_f_25_fdist_1'
         fdist=int(rgbdir.split('_')[-1])
         f=int(rgbdir.split('_')[2])
+        print('fdist:'+str(fdist))
+        print('rgbdir:'+str(rgbdir))
         # print(rgbdir)
         # print('f:'+str(f))
         # print('fdist:'+str(fdist))
