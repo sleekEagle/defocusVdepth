@@ -1,3 +1,7 @@
+# ------------------------------------------------------------------------------
+# The code is from GLPDepth (https://github.com/vinvino02/GLPDepth).
+# For non-commercial purpose only (research, evaluation etc).
+# ------------------------------------------------------------------------------
 
 import os
 import cv2
