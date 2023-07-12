@@ -150,7 +150,6 @@ for i in range(1000):
         gt_blur = batch['blur'].to(device_id)
 
         s1_fcs = torch.ones([input_RGB.shape[0],1, input_RGB.shape[2], input_RGB.shape[3]])
-        s1_fcs*=args.fdist
         s1_fcs = s1_fcs.float().to(device_id)
         depth_pred,blur_pred = def_model(input_RGB,flag_step2=True,x2=s1_fcs)
 
