@@ -180,7 +180,7 @@ for i in range(1000):
         # loss = torch.sqrt(torch.pow(diff_log, 2).mean() -
         #                   0.5 * torch.pow(diff_log.mean(), 2))
 
-        mask=(depth_gt>0)*(depth_gt<10).detach_()
+        mask=(depth_gt>0)*(depth_gt<5).detach_()
         loss_d=criterion(depth_pred.squeeze(dim=1)[mask], depth_gt[mask])
         loss_b=criterion(blur_pred.squeeze(dim=1)[mask],gt_blur[mask])
         if(torch.isnan(loss_d) or torch.isnan(loss_b)):
@@ -228,10 +228,15 @@ for i in range(1000):
             #     n+=1
             # print("val RMSE = %2.5f" %(rmse_total/n))
             # logging.info("val RMSE = " +str(rmse_total/n))
-            results_dict,loss_d=test.validate_dist(val_loader, def_model, criterion, device_id, args,min_dist=0.0,max_dist=2.0,model_name="def")
+            results_dict,loss_d=test.validate_dist(val_loader, def_model, criterion, device_id, args,min_dist=0.0,max_dist=1.0,model_name="def")
             # results_dict,loss_d=test.validate_dist(val_loader, def_model, criterion, device_id, args,min_dist=0.0,max_dist=1.0,model_name="def")
-            print("dist : 0-2 " + str(results_dict))
-            logging.info("dist : 0-2 " + str(results_dict))
+            print("dist : 0-1 " + str(results_dict))
+            logging.info("dist : 0-1 " + str(results_dict))
+            results_dict,loss_d=test.validate_dist(val_loader, def_model, criterion, device_id, args,min_dist=1.0,max_dist=2.0,model_name="def")
+            # results_dict,loss_d=test.validate_dist(val_loader, def_model, criterion, device_id, args,min_dist=0.0,max_dist=1.0,model_name="def")
+            print("dist : 1-2 " + str(results_dict))
+            logging.info("dist : 1-2 " + str(results_dict))
+
             rmse=results_dict['rmse']
             if(i+1==evalitr):
                 best_loss=rmse
