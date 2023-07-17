@@ -180,7 +180,7 @@ for i in range(1000):
         # loss = torch.sqrt(torch.pow(diff_log, 2).mean() -
         #                   0.5 * torch.pow(diff_log.mean(), 2))
 
-        mask=(depth_gt>0)*(depth_gt<2).detach_()
+        mask=(depth_gt>0.0)*(depth_gt<10.0).detach_()
         loss_d=criterion(depth_pred.squeeze(dim=1)[mask], depth_gt[mask])
         loss_b=criterion(blur_pred.squeeze(dim=1)[mask],gt_blur[mask])
         if(torch.isnan(loss_d) or torch.isnan(loss_b)):
