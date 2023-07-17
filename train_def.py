@@ -250,7 +250,7 @@ for i in range(1000):
                     'best': best_loss,
                     'state_dict': def_model.state_dict(),
                     'optimize':optimizer.state_dict(),
-                    },  os.path.abspath(args.resultspth)+args.rgb_dir+'.tar')
+                    },  os.path.join(os.path.abspath(args.resultspth),args.rgb_dir+'.tar')
                     logging.info("saved model")
                     print('model saved')
         def_model.train()
