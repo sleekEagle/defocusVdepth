@@ -229,30 +229,30 @@ for i in range(1000):
             # print("val RMSE = %2.5f" %(rmse_total/n))
             # logging.info("val RMSE = " +str(rmse_total/n))
             # results_dict,loss_d=test.validate_dist(val_loader, def_model, criterion, device_id, args,min_dist=0.0,max_dist=1.0,model_name="def")
-            results_dict,loss_d=test.validate_dist(val_loader, def_model, criterion, device_id, args,min_dist=0.0,max_dist=1.0,model_name="def")
-            print("dist : 0-1 " + str(results_dict))
-            logging.info("dist : 0-1 " + str(results_dict))
-            results_dict,loss_d=test.validate_dist(val_loader, def_model, criterion, device_id, args,min_dist=1.0,max_dist=2.0,model_name="def")
-            print("dist : 1-2 " + str(results_dict))
-            logging.info("dist : 1-2 " + str(results_dict))
+            results_dict1,loss_d=test.validate_dist(val_loader, def_model, criterion, device_id, args,min_dist=0.0,max_dist=1.0,model_name="def")
+            print("dist : 0-1 " + str(results_dict1))
+            logging.info("dist : 0-1 " + str(results_dict1))
+            results_dict2,loss_d=test.validate_dist(val_loader, def_model, criterion, device_id, args,min_dist=1.0,max_dist=2.0,model_name="def")
+            print("dist : 1-2 " + str(results_dict2))
+            logging.info("dist : 1-2 " + str(results_dict2))
             # vali_dist()
 
-            # rmse=results_dict['rmse']
-            # if(i+1==evalitr):
-            #     best_loss=rmse
-            # else:
-            #     if rmse<best_loss:
-            #         best_loss=rmse
-            #         #save model
-            #         torch.save({
-            #         'epoch': i + 1,
-            #         'iters': i + 1,
-            #         'best': best_loss,
-            #         'state_dict': def_model.state_dict(),
-            #         'optimize':optimizer.state_dict(),
-            #         },  os.path.abspath(args.resultspth)+'/model.tar')
-            #         logging.info("saved model")
-            #         print('model saved')
+            rmse=(results_dict1['rmse']+results_dict2['rmse'])*0.5
+            if(i+1==evalitr):
+                best_loss=rmse
+            else:
+                if rmse<best_loss:
+                    best_loss=rmse
+                    #save model
+                    torch.save({
+                    'epoch': i + 1,
+                    'iters': i + 1,
+                    'best': best_loss,
+                    'state_dict': def_model.state_dict(),
+                    'optimize':optimizer.state_dict(),
+                    },  os.path.abspath(args.resultspth)+args.rgb_dir+'.tar')
+                    logging.info("saved model")
+                    print('model saved')
         def_model.train()
 
             
