@@ -160,7 +160,7 @@ def vali_dist():
 
 print('lr='+str(args.max_lr))
 optimizer = optim.Adam(model_params,lr=0.0001)
-scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=500, gamma=0.1)
+scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=300, gamma=0.1)
 def_model.train()
 
 def get_lr(optimizer):
