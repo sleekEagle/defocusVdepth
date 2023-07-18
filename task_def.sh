@@ -3,7 +3,7 @@
 #SBATCH --error="def.err"
 #SBATCH --output="def.out"
 #SBATCH --partition="gpu"
-#SBATCH -w jaguar04
+#SBATCH -w jaguar06
 #export NCCL_DEBUG=INFO
 #export NCCL_DEBUG_SUBSYS=ALL
 #export TORCH_DISTRIBUTED_DEBUG=INFO
