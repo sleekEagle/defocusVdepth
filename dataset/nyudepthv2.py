@@ -20,15 +20,16 @@ def get_blur(s1,s2):
 #selected_dirs: what rgb directories are being selected : a list of indices of sorted dir names
 class nyudepthv2(BaseDataset):
     def __init__(self, data_path, rgb_dir,depth_dir,filenames_path='./dataset/filenames/',
-                 is_train=True, crop_size=(448, 576), scale_size=None):
+                 is_train=True,is_blur=False, crop_size=(448, 576), scale_size=None):
         super().__init__(crop_size)
 
-
+        print('crop_size:'+str(crop_size))
         if crop_size[0] > 480:
             scale_size = (int(crop_size[0]*640/480), crop_size[0])
 
         self.scale_size = scale_size
         self.is_train = is_train
+        self.is_blur=is_blur
         self.data_path = os.path.join(data_path, 'nyu_depth_v2')
         self.rgbpath=os.path.join(self.data_path,rgb_dir)
         self.depthpath=os.path.join(self.data_path,depth_dir)
@@ -83,7 +84,10 @@ class nyudepthv2(BaseDataset):
             depth = cv2.resize(depth, (self.scale_size[0], self.scale_size[1]))
         
         if self.is_train:
-            image,depth = self.augment_training_data(image, depth)
+            if self.is_blur==1:
+                image,depth = self.augment_training_data_blur(image, depth)
+            else:
+                image,depth = self.augment_training_data(image, depth)
         else:
             image,depth = self.augment_test_data(image, depth)
 

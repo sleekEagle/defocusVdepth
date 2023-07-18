@@ -58,7 +58,7 @@ logging.info('Starting training')
 logging.info(args)
 
 # Dataset setting
-dataset_kwargs = {'dataset_name': args.dataset, 'data_path': args.data_path,'rgb_dir':args.rgb_dir, 'depth_dir':args.depth_dir}
+dataset_kwargs = {'dataset_name': args.dataset, 'data_path': args.data_path,'rgb_dir':args.rgb_dir, 'depth_dir':args.depth_dir,'is_blur':args.is_blur}
 dataset_kwargs['crop_size'] = (args.crop_h, args.crop_w)
 
 train_dataset = get_dataset(**dataset_kwargs,is_train=True)
