@@ -42,7 +42,7 @@ class TrainOptions(BaseOptions):
         parser.add_argument('--print_freq', type=int, default=100)
         parser.add_argument('--save_model', action='store_true')     
         parser.add_argument(
-            '--resume_from',  type=str, default='./ckpt/vpd_depth_480x480.pth', help='the checkpoint file to resume from')
+            '--resume_from',  type=str, default=None, help='the checkpoint file to resume from')
         parser.add_argument('--auto_resume', action='store_true')   
         parser.add_argument('--save_result', action='store_true')      
         parser.add_argument('--freeze_encoder',  type=int, default=1)

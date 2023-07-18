@@ -160,7 +160,12 @@ def vali_dist():
 
 print('lr='+str(args.max_lr))
 optimizer = optim.Adam(model_params,lr=0.0001)
+scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=500, gamma=0.1)
 def_model.train()
+
+def get_lr(optimizer):
+    for param_group in optimizer.param_groups:
+        return param_group['lr']
 
 #iterate though dataset
 print('train_loader len='+str(len(train_loader)))
@@ -180,30 +185,6 @@ for i in range(1000):
 
         optimizer.zero_grad()
 
-        # import matplotlib.pyplot as plt
-        # img=input_RGB[0,0,:,:].cpu().numpy()
-        # # img=np.swapaxes(img,0,2)
-        # d=depth_gt[0,:,:].cpu().numpy()
-        # b=gt_blur[0,:,:].cpu().numpy()
-
-        # # plt.figure()
-        # f, axarr = plt.subplots(3,1)
-        # axarr[0].imshow(img) 
-        # axarr[1].imshow(d) 
-        # axarr[2].imshow(b)
-        # plt.show() 
-
-
-
-
-        # pred=depth_pred.squeeze(dim=1)
-        # target=depth_gt
-        # valid_mask = (target > 0).detach()
-
-        # diff_log = torch.log(target[valid_mask]) - torch.log(pred[valid_mask])
-        # loss = torch.sqrt(torch.pow(diff_log, 2).mean() -
-        #                   0.5 * torch.pow(diff_log.mean(), 2))
-
         mask=(depth_gt>0.0)*(depth_gt<2.0).detach_()
         loss_d=criterion(depth_pred.squeeze(dim=1)[mask], depth_gt[mask])
         loss_b=criterion(blur_pred.squeeze(dim=1)[mask],gt_blur[mask])
@@ -216,7 +197,7 @@ for i in range(1000):
         total_b_loss+=loss_b.item()
         loss.backward()
         optimizer.step()
-        #print("batch idx=%2d" %(batch_idx))
+    scheduler.step()
     print("Epochs=%3d blur loss=%5.4f  depth loss=%5.4f" %(i,total_b_loss/len(train_loader),total_d_loss/len(train_loader)))  
     logging.info("Epochs=%3d blur loss=%5.4f  depth loss=%5.4f" , i,total_b_loss/len(train_loader),total_d_loss/len(train_loader))
     end = time.time()    
@@ -277,6 +258,10 @@ for i in range(1000):
                     },  os.path.join(os.path.abspath(args.resultspth),args.rgb_dir+'.tar'))
                     logging.info("saved model")
                     print('model saved')
+            #get learning rate
+            current_lr=get_lr(optimizer)
+            print('current learning rate='+str(current_lr))
+            logging.info("current learning rate="+str(current_lr))
         def_model.train()
 
             
