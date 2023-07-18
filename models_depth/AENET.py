@@ -90,7 +90,7 @@ class AENet(nn.Module):
         return pool
 
 
-    def forward(self, x, inp=3, k=1, flag_step2=False, x2=0):
+    def forward(self, x, inp=3, k=1, flag_step2=False):
         down1 = []
         pool_temp = []
         for j in range(self.n_blocks + 1):

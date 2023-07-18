@@ -272,9 +272,7 @@ def validate_dist(val_loader, model, criterion_d, device_id, args,min_dist=0.0,m
                 input_RGB = torch.cat((input_RGB, torch.flip(input_RGB, [3])), dim=0)
                 class_ids = torch.cat((class_ids, class_ids), dim=0)
             if model_name=="def":
-                s1_fcs = torch.ones([input_RGB.shape[0],1, input_RGB.shape[2], input_RGB.shape[3]])
-                s1_fcs = s1_fcs.float().to(device_id)
-                pred_d,pred_b = model(input_RGB,flag_step2=True,x2=s1_fcs)
+                pred_d,pred_b = model(input_RGB,flag_step2=True)
             else:
                 pred = model(input_RGB, class_ids=class_ids)
                 pred_d = pred['pred_d']

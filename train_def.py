@@ -79,6 +79,19 @@ ch_out_num = 1
 def_model = AENet(ch_inp_num, 1, 16, flag_step2=True).to(device_id)
 model_params = def_model.parameters()
 criterion=torch.nn.MSELoss()
+#load the saved weights to the model
+if args.resume_from:
+    # loading weights of the first step
+    print('loading model....')
+    print('model path :'+args.resume_from)
+    pretrained_dict = torch.load(args.checkpt)
+    model_dict = def_model.state_dict()
+    for param_tensor in model_dict:
+        for param_pre in pretrained_dict:
+            if param_tensor == param_pre:
+                model_dict.update({param_tensor: pretrained_dict[param_pre]})
+    def_model.load_state_dict(model_dict)
+
 
 # print('validating...')
 def vali_dist():
@@ -150,9 +163,7 @@ for i in range(1000):
         class_id = batch['class_id']
         gt_blur = batch['blur'].to(device_id)
 
-        s1_fcs = torch.ones([input_RGB.shape[0],1, input_RGB.shape[2], input_RGB.shape[3]])
-        s1_fcs = s1_fcs.float().to(device_id)
-        depth_pred,blur_pred = def_model(input_RGB,flag_step2=True,x2=s1_fcs)
+        depth_pred,blur_pred = def_model(input_RGB,flag_step2=True)
 
         optimizer.zero_grad()
 
