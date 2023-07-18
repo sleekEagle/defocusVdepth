@@ -64,7 +64,7 @@ class BaseDataset(Dataset):
         augmented = aug(image=image, depth=depth)
         image = augmented['image']
         depth = augmented['depth']
-
+        
         image = self.to_tensor(image)
         depth = self.to_tensor(depth).squeeze()
         self.count += 1
@@ -81,8 +81,11 @@ class BaseDataset(Dataset):
         image = augmented['image']
         depth = augmented['depth']
 
-        image = self.to_tensor(image)
+        totensor=transforms.ToTensor()
+        image = totensor(image)
+
         depth = self.to_tensor(depth).squeeze()
+
         self.count += 1
 
         return image,depth
