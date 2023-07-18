@@ -95,6 +95,16 @@ if args.resume_from:
                 model_dict.update({param_tensor: pretrained_dict[param_pre]})
     def_model.load_state_dict(model_dict)
 
+    #evaluating the loaded model
+    print('evaluating model...')
+    logging.info('evaluating model...')
+    results_dict1,loss_d=test.validate_dist(val_loader, def_model, criterion, device_id, args,min_dist=0.0,max_dist=1.0,model_name="def")
+    print("dist : 0-1 " + str(results_dict1))
+    logging.info("dist : 0-1 " + str(results_dict1))
+    results_dict2,loss_d=test.validate_dist(val_loader, def_model, criterion, device_id, args,min_dist=1.0,max_dist=2.0,model_name="def")
+    print("dist : 1-2 " + str(results_dict2))
+    logging.info("dist : 1-2 " + str(results_dict2))
+
 
 # print('validating...')
 def vali_dist():
