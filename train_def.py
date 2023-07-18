@@ -84,7 +84,7 @@ if args.resume_from:
     # loading weights of the first step
     print('loading model....')
     print('model path :'+args.resume_from)
-    pretrained_dict = torch.load(args.checkpt)
+    pretrained_dict = torch.load(args.resume_from)
     model_dict = def_model.state_dict()
     for param_tensor in model_dict:
         for param_pre in pretrained_dict:
