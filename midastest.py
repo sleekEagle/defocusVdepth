@@ -172,11 +172,6 @@ img=np.random.random((20,20))*255.0
 img_t=to_tensor(img)
 np.max(img),torch.max(img_t)
 
-
-
-
-
-
 midas_transforms = torch.hub.load("intel-isl/MiDaS", "transforms")
 if midas_model_type == "DPT_Large" or midas_model_type == "DPT_Hybrid":
     transform = midas_transforms.dpt_transform
