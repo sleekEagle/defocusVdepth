@@ -56,14 +56,8 @@ class MidasCore(nn.Module):
             nn.ReLU(inplace=True)
         )
 
-        self.feature_conv2 = nn.Sequential(
-            nn.Conv2d(80, 32, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1)),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(32, 16, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1)),
-            nn.ReLU(inplace=True)
-        )
         self.depth_conv = nn.Sequential(
-            nn.Conv2d(17, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1)),
+            nn.Conv2d(81, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1)),
             nn.ReLU(inplace=True),
             nn.Conv2d(128, 32, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1)),
             nn.ReLU(inplace=True),
@@ -161,8 +155,7 @@ class MidasCore(nn.Module):
 
         #concat all the outputs
         feat1=torch.cat((l4_rn_interp,r4_interp,r3_interp,r2_interp,r1_interp),dim=1)
-        feat2_=self.feature_conv2(feat1)
-        feat2=self.inter2(feat2_)
+        feat2=self.inter2(feat1)
 
         #concat with the blur
         blur_=torch.unsqueeze(blur,dim=1)
@@ -243,17 +236,18 @@ class MidasCore(nn.Module):
     def build_from_config(config):
         return MidasCore.build(**config)
     
-# midas_model_type='DPT_BEiT_L_384'
-# use_pretrained_midas=False
-# train_midas=True
-# freeze_midas_bn=False
-# core = MidasCore.build(midas_model_type=midas_model_type, use_pretrained_midas=use_pretrained_midas,
-#                                train_midas=train_midas, fetch_features=True, freeze_bn=freeze_midas_bn,img_size=480)
+midas_model_type='DPT_BEiT_L_384'
+use_pretrained_midas=False
+train_midas=True
+freeze_midas_bn=False
+core = MidasCore.build(midas_model_type=midas_model_type, use_pretrained_midas=use_pretrained_midas,
+                               train_midas=train_midas, fetch_features=True, freeze_bn=freeze_midas_bn,
+                               img_size_in=480,img_size_out=480)
 
 
-# import torch
-# img=torch.rand((1,3,480,480))
-# blur,depth,out=core(img,return_rel_depth=True)
+import torch
+img=torch.rand((1,3,480,480))
+blur,depth,out=core(img,return_rel_depth=True)
 
 # depth.shape
 # for item in out:
