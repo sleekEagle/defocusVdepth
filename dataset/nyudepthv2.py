@@ -33,7 +33,7 @@ class nyudepthv2(BaseDataset):
         self.data_path = os.path.join(data_path, 'nyu_depth_v2')
         self.rgbpath=os.path.join(self.data_path,rgb_dir)
         self.depthpath=os.path.join(self.data_path,depth_dir)
-        self.fdist=int(rgb_dir.split('_')[-1])
+        self.fdist=float(rgb_dir.split('_')[-1])
         print('fdist:'+str(self.fdist))
         
         #read scene names
