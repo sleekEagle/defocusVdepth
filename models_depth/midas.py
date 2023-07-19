@@ -165,20 +165,16 @@ class MidasCore(nn.Module):
         feat2=self.inter2(feat2_)
 
         #concat with the blur
-        rel_depth_=torch.unsqueeze(blur,dim=1)
-        feat3=torch.cat((rel_depth_,feat2),dim=1)
+        blur_=torch.unsqueeze(blur,dim=1)
+        feat3=torch.cat((blur_,feat2),dim=1)
         depth_=self.depth_conv(feat3)
         depth=torch.squeeze(depth_,dim=1)
 
         if self.img_size_out>self.img_size_in:
-            print('blur pre:'+str(blur.shape))
-            print('depth pre:'+str(depth.shape))
             depth=self.final_upscale(torch.unsqueeze(depth,dim=1))
             blur=self.final_upscale(torch.unsqueeze(blur,dim=1))
             depth=torch.squeeze(depth,dim=1)
             blur=torch.squeeze(blur,dim=1)
-            print('blur post:'+str(blur.shape))
-            print('depth post:'+str(depth.shape))
 
         return blur,depth,out
 

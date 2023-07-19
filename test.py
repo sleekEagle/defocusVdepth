@@ -271,8 +271,11 @@ def validate_dist(val_loader, model, criterion_d, device_id, args,min_dist=0.0,m
             if args.flip_test:
                 input_RGB = torch.cat((input_RGB, torch.flip(input_RGB, [3])), dim=0)
                 class_ids = torch.cat((class_ids, class_ids), dim=0)
-            if model_name=="def":
+            
+            if args.model_name=='defnet':
                 pred_d,pred_b = model(input_RGB,flag_step2=True)
+            elif args.model_name=='midas':
+                pred_b,pred_d,_=model(input_RGB,return_rel_depth=True)
             else:
                 pred = model(input_RGB, class_ids=class_ids)
                 pred_d = pred['pred_d']

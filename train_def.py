@@ -268,7 +268,7 @@ for i in range(600):
                     'best': best_loss,
                     'state_dict': model.state_dict(),
                     'optimize':optimizer.state_dict(),
-                    },  os.path.join(os.path.abspath(args.resultspth),args.rgb_dir+'.tar'))
+                    },  os.path.join(os.path.abspath(args.resultspth),(args.model_name+'_'+args.rgb_dir)+'.tar'))
                     logging.info("saved model")
                     print('model saved')
             #get learning rate
