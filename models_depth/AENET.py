@@ -120,6 +120,8 @@ class AENet(nn.Module):
         for i in range(k):
             join_pool = torch.cat([pool_temp[i], pool_max[0]], dim=1)
             bridge.append(self.bridge(join_pool))
+        print('bridge len:'+str(len(bridge)))
+        print('bridge item:'+str(bridge[0].shape))
 
         up_temp = []
         for j in range(self.n_blocks+2):
@@ -142,13 +144,14 @@ class AENet(nn.Module):
                         unpool_all = torch.cat([unpool_all, unpool], dim=2)
                 else:
                     end = self.conv_end(joint)
+                    print('end:'+str(end.shape))
                     out_col = self.conv_out(end)
 
                     if i == 0:
                         out = out_col
                     else:
                         out = torch.cat([out, out_col], dim=1)
-
+        print('sending to down2************')
         if flag_step2:
             down2 = []
             pool_temp = []

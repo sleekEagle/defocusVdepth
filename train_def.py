@@ -74,11 +74,17 @@ val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=1,
 '''
 import AENET used for defocus blur based depth prediction
 '''
+def get_activation(name, bank):
+    def hook(model, input, output):
+        bank[name] = output
+    return hook
+
 if args.model_name=='defnet':
     ch_inp_num = 3
     ch_out_num = 1
     model = AENet(ch_inp_num, 1, 16, flag_step2=True).to(device_id)
 elif args.model_name=='midas':
+    midasouts={}
     # midas_model_type='DPT_BEiT_L_384'
     midas_model_type='MiDaS_small'
     # midas = torch.hub.load("intel-isl/MiDaS", midas_model_type)
@@ -86,6 +92,7 @@ elif args.model_name=='midas':
     train_midas=True
     freeze_midas_bn=False
     model = torch.hub.load("intel-isl/MiDaS", midas_model_type,pretrained=use_pretrained_midas).to(device_id)
+    model.scratch.refinenet1.register_forward_hook(get_activation("r1",midasouts))
    
     # model = MidasCore.build(midas_model_type=midas_model_type, use_pretrained_midas=use_pretrained_midas,
     #                             train_midas=train_midas, fetch_features=True, freeze_bn=freeze_midas_bn,
@@ -200,7 +207,10 @@ for i in range(600):
         elif args.model_name=='midas':
             # blur_pred,depth_pred,_=model(input_RGB,return_rel_depth=True)
             depth_pred=model(input_RGB)
-            blur_pred=torch.zeros_like(depth_pred).to(device_id)
+            blur_pred=midasouts['r1'][:,0,:,:]
+            blur_pred=torch.unsqueeze(blur_pred,dim=1)
+            blur_pred=torch.nn.functional.interpolate(blur_pred,size=(input_RGB.shape[-2],input_RGB.shape[-2]),mode='bilinear')
+            blur_pred=torch.squeeze(blur_pred,dim=1)
 
         optimizer.zero_grad()
 
@@ -208,7 +218,7 @@ for i in range(600):
         loss_d=criterion(depth_pred.squeeze(dim=1)[mask], depth_gt[mask])
         loss_b=criterion(blur_pred.squeeze(dim=1)[mask],gt_blur[mask])
         if(torch.isnan(loss_d) or torch.isnan(loss_b)):
-            print('nan in losses')
+            # print('nan in losses')
             logging.info('nan in losses')
             continue
         loss=loss_d+loss_b

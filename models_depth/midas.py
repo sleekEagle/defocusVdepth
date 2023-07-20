@@ -236,18 +236,18 @@ class MidasCore(nn.Module):
     def build_from_config(config):
         return MidasCore.build(**config)
     
-midas_model_type='DPT_BEiT_L_384'
-use_pretrained_midas=False
-train_midas=True
-freeze_midas_bn=False
-core = MidasCore.build(midas_model_type=midas_model_type, use_pretrained_midas=use_pretrained_midas,
-                               train_midas=train_midas, fetch_features=True, freeze_bn=freeze_midas_bn,
-                               img_size_in=480,img_size_out=480)
+# midas_model_type='DPT_BEiT_L_384'
+# use_pretrained_midas=False
+# train_midas=True
+# freeze_midas_bn=False
+# core = MidasCore.build(midas_model_type=midas_model_type, use_pretrained_midas=use_pretrained_midas,
+#                                train_midas=train_midas, fetch_features=True, freeze_bn=freeze_midas_bn,
+#                                img_size_in=256,img_size_out=256)
 
 
-import torch
-img=torch.rand((1,3,480,480))
-blur,depth,out=core(img,return_rel_depth=True)
+# import torch
+# img=torch.rand((1,3,256,256))
+# blur,depth,out=core(img,return_rel_depth=True)
 
 # depth.shape
 # for item in out:
