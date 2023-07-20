@@ -85,7 +85,7 @@ elif args.model_name=='midas':
     freeze_midas_bn=False
     model = MidasCore.build(midas_model_type=midas_model_type, use_pretrained_midas=use_pretrained_midas,
                                 train_midas=train_midas, fetch_features=True, freeze_bn=freeze_midas_bn,
-                                img_size_in=480,img_size_out=480).to(device_id)
+                                img_size_in=256,img_size_out=256).to(device_id)
 
 model_params = model.parameters()
 criterion=torch.nn.MSELoss()
