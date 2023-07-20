@@ -44,7 +44,7 @@ print(args)
 if not os.path.exists(args.resultspth):
     os.makedirs(args.resultspth)
 now = datetime.now()
-dt_string = now.strftime("%d-%m-%Y_%H_%M_%S")+'.log'
+dt_string = now.strftime("%d-%m-%Y_%H_%M_%S_")+args.model_name+'.log'
 logpath=join(args.resultspth,dt_string)
 
 # logger= logging.getLogger(__name__)
