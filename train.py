@@ -14,7 +14,7 @@ import sys
 sys.path.append('stable-diffusion')
 from models_depth.model import VPDDepth
 import utils_depth.metrics as metrics
-import utils_depth.logging as logging
+import logging
 
 from dataset.base_dataset import get_dataset
 from configs.test_options import TestOptions
