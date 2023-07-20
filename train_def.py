@@ -79,13 +79,17 @@ if args.model_name=='defnet':
     ch_out_num = 1
     model = AENet(ch_inp_num, 1, 16, flag_step2=True).to(device_id)
 elif args.model_name=='midas':
-    midas_model_type='DPT_BEiT_L_384'
+    # midas_model_type='DPT_BEiT_L_384'
+    midas_model_type='MiDaS_small'
+    # midas = torch.hub.load("intel-isl/MiDaS", midas_model_type)
     use_pretrained_midas=False
     train_midas=True
     freeze_midas_bn=False
-    model = MidasCore.build(midas_model_type=midas_model_type, use_pretrained_midas=use_pretrained_midas,
-                                train_midas=train_midas, fetch_features=True, freeze_bn=freeze_midas_bn,
-                                img_size_in=256,img_size_out=256).to(device_id)
+    model = torch.hub.load("intel-isl/MiDaS", midas_model_type,pretrained=use_pretrained_midas).to(device_id)
+   
+    # model = MidasCore.build(midas_model_type=midas_model_type, use_pretrained_midas=use_pretrained_midas,
+    #                             train_midas=train_midas, fetch_features=True, freeze_bn=freeze_midas_bn,
+    #                             img_size_in=256,img_size_out=256).to(device_id)
 
 model_params = model.parameters()
 criterion=torch.nn.MSELoss()
@@ -194,7 +198,9 @@ for i in range(600):
         if args.model_name=='defnet':
             depth_pred,blur_pred = model(input_RGB,flag_step2=True)
         elif args.model_name=='midas':
-            blur_pred,depth_pred,_=model(input_RGB,return_rel_depth=True)
+            # blur_pred,depth_pred,_=model(input_RGB,return_rel_depth=True)
+            depth_pred=model(input_RGB)
+            blur_pred=torch.zeros_like(depth_pred).to(device_id)
 
         optimizer.zero_grad()
 
