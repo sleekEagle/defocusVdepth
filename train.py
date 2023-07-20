@@ -56,12 +56,14 @@ model = VPDDepth(args=args).to(rank)
 print('loading weigths to the model....')
 cudnn.benchmark = True
 #load weights to the model
-from collections import OrderedDict
-model_weight = torch.load(args.resume_from)['model']
-if 'module' in next(iter(model_weight.items()))[0]:
-    model_weight = OrderedDict((k[7:], v) for k, v in model_weight.items())
-model.load_state_dict(model_weight, strict=False)
-print('loaded weights')
+print('loading from :'+str(args.resume_from))
+if args.resume_from:
+    from collections import OrderedDict
+    model_weight = torch.load(args.resume_from)['model']
+    if 'module' in next(iter(model_weight.items()))[0]:
+        model_weight = OrderedDict((k[7:], v) for k, v in model_weight.items())
+    model.load_state_dict(model_weight, strict=False)
+    print('loaded weights')
 #make the model distributed
 model = DDP(model, device_ids=[device_id])
 model_params = model.parameters()
