@@ -276,6 +276,7 @@ def validate_dist(val_loader, model, criterion_d, device_id, args,min_dist=0.0,m
                 pred_d,pred_b = model(input_RGB,flag_step2=True)
             elif args.model_name=='midas':
                 pred_b,pred_d,_=model(input_RGB,return_rel_depth=True)
+                pred_d=torch.unsqueeze(pred_d,dim=1)
             else:
                 pred = model(input_RGB, class_ids=class_ids)
                 pred_d = pred['pred_d']
