@@ -281,6 +281,8 @@ def validate_dist(val_loader, model, criterion_d, device_id, args,min_dist=0.0,m
                 pred_d = pred['pred_d']
         if args.flip_test:
             batch_s = pred_d.shape[0]//2
+            print('pred_d:'+str(pred_d.shape))
+            print('batch_s:'+str(batch_s))
             pred_d = (pred_d[:batch_s] + torch.flip(pred_d[batch_s:], [3]))/2.0
         if args.shift_window_test:
             pred_s = torch.zeros((bs, 1, h, w), device=pred_d.device)
