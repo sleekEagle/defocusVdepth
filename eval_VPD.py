@@ -33,13 +33,10 @@ from os.path import join
 
 from models_depth.AENET import AENet
 
-
-
 metric_name = ['d1', 'd2', 'd3', 'abs_rel', 'sq_rel', 'rmse', 'rmse_log',
                'log10', 'silog']
 
 device_id=0
-
 
 opt = TrainOptions()
 args = opt.initialize().parse_args()
@@ -62,7 +59,7 @@ model = VPDDepth(args=args).to(device_id)
 model_params = model.parameters()
 
 #get model and load weights
-if args.resume_from:
+if args.resume_geometry_from:
     from collections import OrderedDict
     print('loading weigths to the model....')
     logging.info('loading weigths to the model....')
@@ -70,12 +67,12 @@ if args.resume_from:
     #load weights to the model
     print('loading from :'+str(args.resume_from))
     logging.info('loading from :'+str(args.resume_from))
-    model_weight = torch.load(args.resume_from)['model']
+    model_weight = torch.load(args.resume_geometry_from)['model']
     if 'module' in next(iter(model_weight.items()))[0]:
         model_weight = OrderedDict((k[7:], v) for k, v in model_weight.items())
     model.load_state_dict(model_weight, strict=False)
     print('loaded weights')
-    logging.info('loaded weights')
+    logging.info('loaded weights')  
 
 #create the name of the model
 pretrain = args.pretrained.split('.')[0]
@@ -105,40 +102,5 @@ val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=1,
                                          num_workers=0,pin_memory=True)
 
 
-criterion_d = SiLogLoss()
-print('validating...')
-def vali_dist():
-        results_dict,loss_d=test.validate_dist(val_loader, model, criterion_d, device_id, args,min_dist=0.0,max_dist=1.0,model_name=args.geometry_model)
-        print("dist : 0-1 " + str(results_dict))
-        logging.info("dist : 0-1 " + str(results_dict))
-
-        results_dict,loss_d=test.validate_dist(val_loader, model, criterion_d, device_id, args,min_dist=1.0,max_dist=2.0,model_name=args.geometry_model)
-        print("dist : 1-2 " + str(results_dict))
-        logging.info("dist : 1-2 " + str(results_dict))
-
-        results_dict,loss_d=test.validate_dist(val_loader, model, criterion_d, device_id, args,min_dist=2.0,max_dist=3.0,model_name=args.geometry_model)
-        print("dist : 2-3 " + str(results_dict))
-        logging.info("dist : 2-3 " + str(results_dict))
-
-        results_dict,loss_d=test.validate_dist(val_loader, model, criterion_d, device_id, args,min_dist=3.0,max_dist=4.0,model_name=args.geometry_model)
-        print("dist : 3-4 " + str(results_dict))
-        logging.info("dist : 3-4 " + str(results_dict))
-
-        results_dict,loss_d=test.validate_dist(val_loader, model, criterion_d, device_id, args,min_dist=4.0,max_dist=5.0,model_name=args.geometry_model)
-        print("dist : 4-5 " + str(results_dict))
-        logging.info("dist : 4-5 " + str(results_dict))
-
-        results_dict,loss_d=test.validate_dist(val_loader, model, criterion_d, device_id, args,min_dist=5.0,max_dist=6.0,model_name=args.geometry_model)
-        print("dist : 5-6 " + str(results_dict))
-        logging.info("dist : 5-6 " + str(results_dict))
-
-        results_dict,loss_d=test.validate_dist(val_loader, model, criterion_d, device_id, args,min_dist=6.0,max_dist=8.0,model_name=args.geometry_model)
-        print("dist : 6-8 " + str(results_dict))
-        logging.info("dist : 6-8 " + str(results_dict))
-        results_dict,loss_d=test.validate_dist(val_loader, model, criterion_d, device_id, args,min_dist=8.0,max_dist=10.0,model_name=args.geometry_model)
-        print("dist : 8-10 " + str(results_dict))
-        logging.info("dist : 8-10 " + str(results_dict))
-
-
 if __name__ == "__main__":
-    vali_dist()
+    test.vali_dist(val_loader,model,device_id,args)

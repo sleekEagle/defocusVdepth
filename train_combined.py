@@ -27,7 +27,7 @@ from os.path import join
 
 from models_depth.AENET import AENet
 from models_depth.midas import MidasCore
-
+from models_depth.model import VPDDepth
 
 
 metric_name = ['d1', 'd2', 'd3', 'abs_rel', 'sq_rel', 'rmse', 'rmse_log',
@@ -46,13 +46,6 @@ if not os.path.exists(args.resultspth):
 now = datetime.now()
 dt_string = now.strftime("%d-%m-%Y_%H_%M_%S_")+args.model_name+'.log'
 logpath=join(args.resultspth,dt_string)
-
-# logger= logging.getLogger(__name__)
-# logger.setLevel(logging.INFO)
-# handler = logging.FileHandler(logpath, 'a', 'utf-8')
-# handler.setFormatter(logging.Formatter(": %(levelname)s:%(asctime)s | %(message)s",datefmt='%m/%d/%Y %I:%M:%S %p'))
-# logger.addHandler(handler)
-
 
 logging.basicConfig(filename=logpath,filemode='w', level=logging.INFO)
 logging.info('Starting training')
@@ -79,11 +72,16 @@ def get_activation(name, bank):
         bank[name] = output
     return hook
 
-if args.model_name=='defnet':
+'''
+************
+load blur model
+************
+'''
+if args.blur_model=='defnet':
     ch_inp_num = 3
     ch_out_num = 1
-    model = AENet(ch_inp_num, 1, 16, flag_step2=True).to(device_id)
-elif args.model_name=='midas':
+    blur_model = AENet(ch_inp_num, 1, 16, flag_step2=True).to(device_id)
+elif args.blur_model=='midas':
     midasouts={}
     # midas_model_type='DPT_BEiT_L_384'
     midas_model_type='MiDaS_small'
@@ -91,9 +89,51 @@ elif args.model_name=='midas':
     use_pretrained_midas=False
     train_midas=True
     freeze_midas_bn=False
-    model = torch.hub.load("intel-isl/MiDaS", midas_model_type,pretrained=use_pretrained_midas).to(device_id)
-    model.scratch.refinenet1.register_forward_hook(get_activation("r1",midasouts))
-   
-    # model = MidasCore.build(midas_model_type=midas_model_type, use_pretrained_midas=use_pretrained_midas,
-    #                             train_midas=train_midas, fetch_features=True, freeze_bn=freeze_midas_bn,
-    #                             img_size_in=256,img_size_out=256).to(device_id)
+    blur_model = torch.hub.load("intel-isl/MiDaS", midas_model_type,pretrained=use_pretrained_midas).to(device_id)
+    blur_model.scratch.refinenet1.register_forward_hook(get_activation("r1",midasouts))
+
+if args.resume_blur_from:
+    # loading weights of the first step
+    print('loading model....')
+    logging.info("loading model....")
+    print('model path :'+args.resume_blur_from)
+    logging.info("model path : "+str(args.resume_blur_from))
+    pretrained_dict = torch.load(args.resume_blur_from)
+    model_dict = blur_model.state_dict()
+    for param_tensor in model_dict:
+        for param_pre in pretrained_dict:
+            if param_tensor == param_pre:
+                model_dict.update({param_tensor: pretrained_dict[param_pre]})
+    blur_model.load_state_dict(model_dict)
+
+'''
+************
+load geometry model
+************
+'''
+if args.geometry_model=='vpd':
+    geometry_model = VPDDepth(args=args).to(device_id)
+#get model and load weights
+if args.resume_geometry_from:
+    from collections import OrderedDict
+    print('loading weigths to the model....')
+    logging.info('loading weigths to the model....')
+    cudnn.benchmark = True
+    #load weights to the model
+    print('loading from :'+str(args.resume_geometry_from))
+    logging.info('loading from :'+str(args.resume_geometry_from))
+    model_weight = torch.load(args.resume_geometry_from)['model']
+    if 'module' in next(iter(model_weight.items()))[0]:
+        model_weight = OrderedDict((k[7:], v) for k, v in model_weight.items())
+    geometry_model.load_state_dict(model_weight, strict=False)
+    print('loaded weights')
+    logging.info('loaded weights')
+
+geometry_model_params = geometry_model.parameters()
+blur_model_params = blur_model.parameters()
+
+
+
+
+
+
