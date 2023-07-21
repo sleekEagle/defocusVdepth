@@ -102,6 +102,7 @@ model_params = model.parameters()
 criterion=torch.nn.MSELoss()
 #load the saved weights to the model
 print('resume from :'+str(args.resume_from))
+
 if args.resume_from:
     # loading weights of the first step
     print('loading model....')

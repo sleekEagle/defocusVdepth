@@ -36,6 +36,15 @@ class AENet(nn.Module):
             nn.Conv2d(self.num_filter, self.out_dim, kernel_size=3, stride=1, padding=1),
         )
 
+        self.selector = nn.Sequential(
+            nn.Conv2d(16,32, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(),
+            nn.Conv2d(32,16, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(),
+            nn.Conv2d(16,2, kernel_size=3, stride=1, padding=1),
+            nn.Softmax(dim=1)
+        )
+
         if flag_step2:
             self.conv_down2_0 = self.convsblocks(1, self.num_filter * 1, act_fnc)
             self.pool2_0 = self.poolblock()
@@ -120,8 +129,6 @@ class AENet(nn.Module):
         for i in range(k):
             join_pool = torch.cat([pool_temp[i], pool_max[0]], dim=1)
             bridge.append(self.bridge(join_pool))
-        print('bridge len:'+str(len(bridge)))
-        print('bridge item:'+str(bridge[0].shape))
 
         up_temp = []
         for j in range(self.n_blocks+2):
@@ -144,14 +151,13 @@ class AENet(nn.Module):
                         unpool_all = torch.cat([unpool_all, unpool], dim=2)
                 else:
                     end = self.conv_end(joint)
-                    print('end:'+str(end.shape))
                     out_col = self.conv_out(end)
+                    selection=self.selector(end)
 
                     if i == 0:
                         out = out_col
                     else:
                         out = torch.cat([out, out_col], dim=1)
-        print('sending to down2************')
         if flag_step2:
             down2 = []
             pool_temp = []
@@ -209,6 +215,6 @@ class AENet(nn.Module):
             out_step2 = self.conv_out2(end2)
 
         if flag_step2:
-            return out_step2, out
+            return out_step2,out,selection
         else:
             return out

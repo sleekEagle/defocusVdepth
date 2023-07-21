@@ -150,6 +150,12 @@ def vali_dist():
         results_dict,loss_d=test.validate_dist(val_loader, model, criterion_d, device_id, args,min_dist=1.0,max_dist=2.0)
         print("dist : 1-2 " + str(results_dict))
         logging.info("dist : 1-2 " + str(results_dict))
+        results_dict,loss_d=test.validate_dist(val_loader, model, criterion_d, device_id, args,min_dist=6.0,max_dist=8.0)
+        print("dist : 6-8 " + str(results_dict))
+        logging.info("dist : 6-8 " + str(results_dict))
+        results_dict,loss_d=test.validate_dist(val_loader, model, criterion_d, device_id, args,min_dist=8.0,max_dist=10.0)
+        print("dist : 8-10 " + str(results_dict))
+        logging.info("dist : 8-10 " + str(results_dict))
 
     if device_id==1:
         results_dict,loss_d=test.validate_dist(val_loader, model, criterion_d, device_id, args,min_dist=2.0,max_dist=3.0)
@@ -158,6 +164,12 @@ def vali_dist():
         results_dict,loss_d=test.validate_dist(val_loader, model, criterion_d, device_id, args,min_dist=3.0,max_dist=4.0)
         print("dist : 3-4 " + str(results_dict))
         logging.info("dist : 3-4 " + str(results_dict))
+        results_dict,loss_d=test.validate_dist(val_loader, model, criterion_d, device_id, args,min_dist=4.0,max_dist=5.0)
+        print("dist : 4-5 " + str(results_dict))
+        logging.info("dist : 4-5 " + str(results_dict))
+        results_dict,loss_d=test.validate_dist(val_loader, model, criterion_d, device_id, args,min_dist=5.0,max_dist=6.0)
+        print("dist : 5-6 " + str(results_dict))
+        logging.info("dist : 5-6 " + str(results_dict))
 
     if device_id==2:
         results_dict,loss_d=test.validate_dist(val_loader, model, criterion_d, device_id, args,min_dist=4.0,max_dist=5.0)
