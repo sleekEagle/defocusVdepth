@@ -197,16 +197,13 @@ for i in range(1000):
         preds = model(input_RGB, class_ids=class_id)
         optimizer.zero_grad()
         loss_d=criterion_d(preds['pred_d'].squeeze(dim=1), depth_gt)
-        loss_b=criterion_b(preds['blur'],gt_blur)
-        loss_b*=0.1
-        loss=loss_d+loss_b
+        loss=loss_d
         total_d_loss+=loss_d.item()
-        total_b_loss+=loss_b.item()
         loss.backward()
         optimizer.step()
         #print("batch idx=%2d" %(batch_idx))
-    print("Epochs=%3d blur loss=%5.4f  depth loss=%5.4f" %(i,total_b_loss/len(train_loader),total_d_loss/len(train_loader))) 
-    logging.info("Epochs=%3d blur loss=%5.4f  depth loss=%5.4f" , i,total_b_loss/len(train_loader),total_d_loss/len(train_loader)) 
+    print("Epochs=%3d depth loss=%5.4f" %(i,total_d_loss/len(train_loader))) 
+    logging.info("Epochs=%3d depth loss=%5.4f" ,i,total_d_loss/len(train_loader)) 
     end = time.time()
     #print("Elapsed time = %11.1f" %(end-start))    
     if i%10==0:

@@ -277,9 +277,11 @@ def validate_dist(val_loader, model, criterion_d, device_id, args,min_dist=0.0,m
             elif args.model_name=='midas':
                 pred_d=model(input_RGB)
                 pred_d=torch.unsqueeze(pred_d,dim=1)
-            else:
+            elif args.model_name=='vpd':
                 pred = model(input_RGB, class_ids=class_ids)
                 pred_d = pred['pred_d']
+            else:
+                return -1
         if args.flip_test:
             batch_s = pred_d.shape[0]//2
             pred_d = (pred_d[:batch_s] + torch.flip(pred_d[batch_s:], [3]))/2.0
