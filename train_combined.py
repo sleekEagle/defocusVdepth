@@ -133,6 +133,13 @@ geometry_model_params = geometry_model.parameters()
 blur_model_params = blur_model.parameters()
 
 
+'''
+Evauate the models
+'''
+test.vali_dist(val_loader,blur_model,device_id,args)
+
+
+
 
 
 

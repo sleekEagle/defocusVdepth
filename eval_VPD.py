@@ -15,6 +15,7 @@ sys.path.append('stable-diffusion')
 from models_depth.model import VPDDepth
 import utils_depth.metrics as metrics
 import logging
+logger=logging
 
 from dataset.base_dataset import get_dataset
 from configs.test_options import TestOptions
@@ -51,9 +52,9 @@ now = datetime.now()
 dataset=args.rgb_dir[10:]
 dt_string = now.strftime("%d-%m-%Y_%H_%M_%S_")+dataset+'_VPD_eval.log'
 logpath=join(args.resultspth,dt_string)
-logging.basicConfig(filename=logpath,filemode='w', level=logging.INFO)
-logging.info('Starting training')
-logging.info(args)
+logger.basicConfig(filename=logpath,filemode='w', level=logger.INFO)
+logger.info('Starting training')
+logger.info(args)
 
 model = VPDDepth(args=args).to(device_id)
 model_params = model.parameters()
@@ -65,7 +66,7 @@ if args.resume_geometry_from:
     logging.info('loading weigths to the model....')
     cudnn.benchmark = True
     #load weights to the model
-    print('loading from :'+str(args.resume_from))
+    print('loading from :'+str(args.resume_geometry_from))
     logging.info('loading from :'+str(args.resume_from))
     model_weight = torch.load(args.resume_geometry_from)['model']
     if 'module' in next(iter(model_weight.items()))[0]:
@@ -103,4 +104,4 @@ val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=1,
 
 
 if __name__ == "__main__":
-    test.vali_dist(val_loader,model,device_id,args)
+    test.vali_dist(val_loader,model,device_id,args,logger)
