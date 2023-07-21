@@ -351,36 +351,36 @@ def validate_dist(val_loader, model, criterion_d, device_id, args,min_dist=0.0,m
 
 
 criterion_d = SiLogLoss()
-def vali_dist(val_loader,model,device_id,args,logger):
+def vali_dist(val_loader,model,device_id,args,logger,model_name):
         logger.info('testingt....')
-        results_dict,loss_d=validate_dist(val_loader, model, criterion_d, device_id, args,min_dist=0.0,max_dist=1.0,model_name=args.geometry_model)
+        results_dict,loss_d=validate_dist(val_loader, model, criterion_d, device_id, args,min_dist=0.0,max_dist=1.0,model_name=model_name)
         print("dist : 0-1 " + str(results_dict))
         logger.info("dist : 0-1 " + str(results_dict))
 
-        results_dict,loss_d=validate_dist(val_loader, model, criterion_d, device_id, args,min_dist=1.0,max_dist=2.0,model_name=args.geometry_model)
+        results_dict,loss_d=validate_dist(val_loader, model, criterion_d, device_id, args,min_dist=1.0,max_dist=2.0,model_name=model_name)
         print("dist : 1-2 " + str(results_dict))
         logger.info("dist : 1-2 " + str(results_dict))
 
-        results_dict,loss_d=validate_dist(val_loader, model, criterion_d, device_id, args,min_dist=2.0,max_dist=3.0,model_name=args.geometry_model)
+        results_dict,loss_d=validate_dist(val_loader, model, criterion_d, device_id, args,min_dist=2.0,max_dist=3.0,model_name=model_name)
         print("dist : 2-3 " + str(results_dict))
         logger.info("dist : 2-3 " + str(results_dict))
 
-        results_dict,loss_d=validate_dist(val_loader, model, criterion_d, device_id, args,min_dist=3.0,max_dist=4.0,model_name=args.geometry_model)
+        results_dict,loss_d=validate_dist(val_loader, model, criterion_d, device_id, args,min_dist=3.0,max_dist=4.0,model_name=model_name)
         print("dist : 3-4 " + str(results_dict))
         logger.info("dist : 3-4 " + str(results_dict))
 
-        results_dict,loss_d=validate_dist(val_loader, model, criterion_d, device_id, args,min_dist=4.0,max_dist=5.0,model_name=args.geometry_model)
+        results_dict,loss_d=validate_dist(val_loader, model, criterion_d, device_id, args,min_dist=4.0,max_dist=5.0,model_name=model_name)
         print("dist : 4-5 " + str(results_dict))
         logger.info("dist : 4-5 " + str(results_dict))
 
-        results_dict,loss_d=validate_dist(val_loader, model, criterion_d, device_id, args,min_dist=5.0,max_dist=6.0,model_name=args.geometry_model)
+        results_dict,loss_d=validate_dist(val_loader, model, criterion_d, device_id, args,min_dist=5.0,max_dist=6.0,model_name=model_name)
         print("dist : 5-6 " + str(results_dict))
         logger.info("dist : 5-6 " + str(results_dict))
 
-        results_dict,loss_d=validate_dist(val_loader, model, criterion_d, device_id, args,min_dist=6.0,max_dist=8.0,model_name=args.geometry_model)
+        results_dict,loss_d=validate_dist(val_loader, model, criterion_d, device_id, args,min_dist=6.0,max_dist=8.0,model_name=model_name)
         print("dist : 6-8 " + str(results_dict))
         logger.info("dist : 6-8 " + str(results_dict))
-        results_dict,loss_d=validate_dist(val_loader, model, criterion_d, device_id, args,min_dist=8.0,max_dist=10.0,model_name=args.geometry_model)
+        results_dict,loss_d=validate_dist(val_loader, model, criterion_d, device_id, args,min_dist=8.0,max_dist=10.0,model_name=model_name)
         print("dist : 8-10 " + str(results_dict))
         logger.info("dist : 8-10 " + str(results_dict))
 

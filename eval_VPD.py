@@ -67,7 +67,7 @@ if args.resume_geometry_from:
     cudnn.benchmark = True
     #load weights to the model
     print('loading from :'+str(args.resume_geometry_from))
-    logging.info('loading from :'+str(args.resume_from))
+    logging.info('loading from :'+str(args.resume_geometry_from))
     model_weight = torch.load(args.resume_geometry_from)['model']
     if 'module' in next(iter(model_weight.items()))[0]:
         model_weight = OrderedDict((k[7:], v) for k, v in model_weight.items())
@@ -104,4 +104,4 @@ val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=1,
 
 
 if __name__ == "__main__":
-    test.vali_dist(val_loader,model,device_id,args,logger)
+    test.vali_dist(val_loader,model,device_id,args,logger,args.geometry_model)

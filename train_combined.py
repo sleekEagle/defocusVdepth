@@ -23,6 +23,7 @@ import test
 import importlib
 import time
 import logging
+logger=logging
 from os.path import join
 
 from models_depth.AENET import AENet
@@ -44,12 +45,13 @@ print(args)
 if not os.path.exists(args.resultspth):
     os.makedirs(args.resultspth)
 now = datetime.now()
-dt_string = now.strftime("%d-%m-%Y_%H_%M_%S_")+args.model_name+'.log'
+dataset=args.rgb_dir[10:]
+dt_string = now.strftime("%d-%m-%Y_%H_%M_%S_")+dataset+'_comb_train.log'
 logpath=join(args.resultspth,dt_string)
 
-logging.basicConfig(filename=logpath,filemode='w', level=logging.INFO)
-logging.info('Starting training')
-logging.info(args)
+logger.basicConfig(filename=logpath,filemode='w', level=logger.INFO)
+logger.info('Starting training')
+logger.info(args)
 
 # Dataset setting
 dataset_kwargs = {'dataset_name': args.dataset, 'data_path': args.data_path,'rgb_dir':args.rgb_dir, 'depth_dir':args.depth_dir,'is_blur':args.is_blur}
@@ -136,7 +138,8 @@ blur_model_params = blur_model.parameters()
 '''
 Evauate the models
 '''
-test.vali_dist(val_loader,blur_model,device_id,args)
+logger.info('validating the blur model...')
+test.vali_dist(val_loader,blur_model,device_id,args,logger,args.blur_model)
 
 
 
