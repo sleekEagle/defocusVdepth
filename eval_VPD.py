@@ -103,6 +103,7 @@ sampler_val = torch.utils.data.DistributedSampler(
 val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=1,
                                          num_workers=0,pin_memory=True)
 
+
 criterion_d = SiLogLoss()
 print('validating...')
 def vali_dist():
