@@ -51,7 +51,8 @@ print(args)
 if not os.path.exists(args.resultspth):
     os.makedirs(args.resultspth)
 now = datetime.now()
-dt_string = now.strftime("%d-%m-%Y_%H_%M_%S")+'_VPD_eval.log'
+dataset=args.rgb_dir[10:]
+dt_string = now.strftime("%d-%m-%Y_%H_%M_%S_")+dataset+'_VPD_eval.log'
 logpath=join(args.resultspth,dt_string)
 logging.basicConfig(filename=logpath,filemode='w', level=logging.INFO)
 logging.info('Starting training')
