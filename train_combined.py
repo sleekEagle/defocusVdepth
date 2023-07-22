@@ -97,10 +97,8 @@ elif args.blur_model=='midas':
 
 if args.resume_blur_from:
    # loading weights of the first step
-    print('loading model....')
-    logging.info("loading model....")
-    print('model path :'+args.resume_blur_from)
-    logging.info("model path : "+str(args.resume_blur_from))
+    print('loading blur model from path :'+args.resume_blur_from)
+    logging.info("loading blur model from path : "+str(args.resume_blur_from))
     pretrained_dict = torch.load(args.resume_blur_from)
     blur_model.load_state_dict(pretrained_dict['state_dict'])
     blur_model.eval()
@@ -148,6 +146,17 @@ logger.info("geo model error dist : 2-10 " + str(results_dict))
 make combined model
 '''
 selectorNet=Selector(blur_model,geometry_model).to(device_id)
+'''
+Load weight from file if given
+'''
+if args.resume_selector_from:
+    # loading weights of the first step
+    print('loading selector_conv weights from :'+args.resume_selector_from)
+    logging.info("loading selector_conv weights from : "+str(args.resume_selector_from))
+    pretrained_dict = torch.load(args.resume_selector_from)
+    selectorNet.conv_selector.load_state_dict(pretrained_dict['state_dict'])
+
+
 model_params = selectorNet.parameters()
 optimizer = optim.Adam(model_params,lr=0.0001)
 selectorNet.train()
@@ -183,17 +192,7 @@ for i in range(600):
         print("dist : 2-10 " + str(results_dict))
         logger.info("dist : 2-10 " + str(results_dict))
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+        #save model
+        torch.save({'state_dict': selectorNet.conv_selector.state_dict()},
+                    os.path.join(os.path.abspath(args.resultspth),('selector_'+args.rgb_dir)+'.tar'))
 
