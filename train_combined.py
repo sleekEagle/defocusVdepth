@@ -142,6 +142,30 @@ test.vali_dist(val_loader,blur_model,device_id,args,logger,args.blur_model)
 make combined model
 '''
 
+def get_activation(name, bank):
+    def hook(model, input, output):
+        bank[name] = output
+    return hook
+outputs_blur={}
+blur_model.conv_end.register_forward_hook(get_activation("conv_end",outputs_blur))
+
+outputs_geo={}
+geometry_model.encoder.register_forward_hook(get_activation("encoder",outputs_geo))
+
+
+for batch_idx, batch in enumerate(train_loader):
+    input_RGB = batch['image'].to(device_id)
+    depth_gt = batch['depth'].to(device_id)
+    class_id = batch['class_id']
+    gt_blur = batch['blur'].to(device_id)
+
+out=blur_model(input_RGB,flag_step2=True)
+input_RGB=input_RGB[0:1,:,:,:]
+geometry_model(input_RGB,class_ids=class_id)
+
+
+
+
 
 
 
