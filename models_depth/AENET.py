@@ -36,19 +36,9 @@ class AENet(nn.Module):
             nn.Conv2d(self.num_filter, self.out_dim, kernel_size=3, stride=1, padding=1),
         )
 
-        self.selector = nn.Sequential(
-            nn.Conv2d(16,32, kernel_size=3, stride=1, padding=1),
-            nn.ReLU(),
-            nn.Conv2d(32,16, kernel_size=3, stride=1, padding=1),
-            nn.ReLU(),
-            nn.Conv2d(16,2, kernel_size=3, stride=1, padding=1),
-            nn.Softmax(dim=1)
-        )
-
         if flag_step2:
             self.conv_down2_0 = self.convsblocks(1, self.num_filter * 1, act_fnc)
             self.pool2_0 = self.poolblock()
-
 
             for i in range(self.n_blocks):
                 self.add_module('conv_down2_' + str(i + 1), self.convsblocks(self.num_filter * (2 ** i) * 2, self.num_filter * (2 ** i) * 2, act_fnc))
@@ -152,7 +142,6 @@ class AENet(nn.Module):
                 else:
                     end = self.conv_end(joint)
                     out_col = self.conv_out(end)
-                    selection=self.selector(end)
 
                     if i == 0:
                         out = out_col
@@ -215,6 +204,6 @@ class AENet(nn.Module):
             out_step2 = self.conv_out2(end2)
 
         if flag_step2:
-            return out_step2,out,selection
+            return out_step2,out
         else:
             return out

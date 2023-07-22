@@ -23,6 +23,7 @@ import test
 import importlib
 import time
 import logging
+logger=logging
 from os.path import join
 
 from models_depth.AENET import AENet
@@ -44,7 +45,7 @@ print(args)
 if not os.path.exists(args.resultspth):
     os.makedirs(args.resultspth)
 now = datetime.now()
-dt_string = now.strftime("%d-%m-%Y_%H_%M_%S_")+args.model_name+'.log'
+dt_string = now.strftime("%d-%m-%Y_%H_%M_%S_")+args.blur_model+'.log'
 logpath=join(args.resultspth,dt_string)
 
 # logger= logging.getLogger(__name__)
@@ -54,9 +55,9 @@ logpath=join(args.resultspth,dt_string)
 # logger.addHandler(handler)
 
 
-logging.basicConfig(filename=logpath,filemode='w', level=logging.INFO)
-logging.info('Starting training')
-logging.info(args)
+logger.basicConfig(filename=logpath,filemode='w', level=logger.INFO)
+logger.info('Starting training')
+logger.info(args)
 
 # Dataset setting
 dataset_kwargs = {'dataset_name': args.dataset, 'data_path': args.data_path,'rgb_dir':args.rgb_dir, 'depth_dir':args.depth_dir,'is_blur':args.is_blur}
@@ -79,11 +80,11 @@ def get_activation(name, bank):
         bank[name] = output
     return hook
 
-if args.model_name=='defnet':
+if args.blur_model=='defnet':
     ch_inp_num = 3
     ch_out_num = 1
     model = AENet(ch_inp_num, 1, 16, flag_step2=True).to(device_id)
-elif args.model_name=='midas':
+elif args.blur_model=='midas':
     midasouts={}
     # midas_model_type='DPT_BEiT_L_384'
     midas_model_type='MiDaS_small'
@@ -101,84 +102,27 @@ elif args.model_name=='midas':
 model_params = model.parameters()
 criterion=torch.nn.MSELoss()
 #load the saved weights to the model
-print('resume from :'+str(args.resume_from))
+print('resume from :'+str(args.resume_blur_from))
 
-if args.resume_from:
+args.resume_blur_from='C:\\Users\\lahir\\Documents\\refocused_f_25_fdist_2.tar'
+if args.resume_blur_from:
     # loading weights of the first step
     print('loading model....')
     logging.info("loading model....")
-    print('model path :'+args.resume_from)
-    logging.info("model path : "+str(args.resume_from))
-    pretrained_dict = torch.load(args.resume_from)
-    model_dict = model.state_dict()
-    for param_tensor in model_dict:
-        for param_pre in pretrained_dict:
-            if param_tensor == param_pre:
-                model_dict.update({param_tensor: pretrained_dict[param_pre]})
-    model.load_state_dict(model_dict)
-
+    print('model path :'+args.resume_blur_from)
+    logging.info("model path : "+str(args.resume_blur_from))
+    pretrained_dict = torch.load(args.resume_blur_from)
+    model.load_state_dict(pretrained_dict['state_dict'])
+    model.eval()
     #evaluating the loaded model
     print('evaluating model...')
-    logging.info('evaluating model...')
-    results_dict1,loss_d=test.validate_dist(val_loader, model, criterion, device_id, args,min_dist=0.0,max_dist=1.0,model_name="def")
+    logger.info('evaluating model...')
+    results_dict1,loss_d=test.validate_dist(val_loader, model, criterion, device_id, args,min_dist=0.0,max_dist=1.0,model_name=args.blur_model)
     print("dist : 0-1 " + str(results_dict1))
-    logging.info("dist : 0-1 " + str(results_dict1))
-    results_dict2,loss_d=test.validate_dist(val_loader, model, criterion, device_id, args,min_dist=1.0,max_dist=2.0,model_name="def")
+    logger.info("dist : 0-1 " + str(results_dict1))
+    results_dict2,loss_d=test.validate_dist(val_loader, model, criterion, device_id, args,min_dist=1.0,max_dist=2.0,model_name=args.blur_model)
     print("dist : 1-2 " + str(results_dict2))
-    logging.info("dist : 1-2 " + str(results_dict2))
-
-
-# print('validating...')
-def vali_dist():
-    if device_id==0:
-        results_dict,loss_d=test.validate_dist(val_loader, model, criterion, device_id, args,min_dist=0.0,max_dist=1.0,model_name="def")
-        print("dist : 0-1 " + str(results_dict))
-        logging.info("dist : 0-1 " + str(results_dict))
-        results_dict,loss_d=test.validate_dist(val_loader, model, criterion, device_id, args,min_dist=1.0,max_dist=2.0,model_name="def")
-        print("dist : 1-2 " + str(results_dict))
-        logging.info("dist : 1-2 " + str(results_dict))
-
-        results_dict,loss_d=test.validate_dist(val_loader, model, criterion, device_id, args,min_dist=2.0,max_dist=3.0,model_name="def")
-        print("dist : 2-3 " + str(results_dict))
-        logging.info("dist : 2-3 " + str(results_dict))
-        results_dict,loss_d=test.validate_dist(val_loader, model, criterion, device_id, args,min_dist=3.0,max_dist=4.0,model_name="def")
-        print("dist : 3-4 " + str(results_dict))
-        logging.info("dist : 3-4 " + str(results_dict))
-        
-        results_dict,loss_d=test.validate_dist(val_loader, model, criterion, device_id, args,min_dist=4.0,max_dist=5.0,model_name="def")
-        print("dist : 4-5 " + str(results_dict))
-        logging.info("dist : 4-5 " + str(results_dict))
-        results_dict,loss_d=test.validate_dist(val_loader, model, criterion, device_id, args,min_dist=5.0,max_dist=6.0,model_name="def")
-        print("dist : 5-6 " + str(results_dict))
-        logging.info("dist : 5-6 " + str(results_dict))
-        
-        results_dict,loss_d=test.validate_dist(val_loader, model, criterion, device_id, args,min_dist=6.0,max_dist=8.0,model_name="def")
-        print("dist : 6-8 " + str(results_dict))
-        logging.info("dist : 6-8 " + str(results_dict))
-        results_dict,loss_d=test.validate_dist(val_loader, model, criterion, device_id, args,min_dist=8.0,max_dist=10.0,model_name="def")
-        print("dist : 8-10 " + str(results_dict))
-        logging.info("dist : 8-10 " + str(results_dict))
-        results_dict,loss_d=test.validate_dist(val_loader, model, criterion, device_id, args,min_dist=0.0,max_dist=10.0,model_name="def")
-        print("dist : 0-10 " + str(results_dict))
-        logging.info("dist : 0-10 " + str(results_dict))
-        return results_dict['rmse']
-    if device_id==1:
-        results_dict,loss_d=test.validate_dist(val_loader, model, criterion, device_id, args,min_dist=2.0,max_dist=3.0,model_name="def")
-        print("dist : 2-3 " + str(results_dict))
-        results_dict,loss_d=test.validate_dist(val_loader, model, criterion, device_id, args,min_dist=3.0,max_dist=4.0,model_name="def")
-        print("dist : 3-4 " + str(results_dict))
-
-    if device_id==2:
-        results_dict,loss_d=test.validate_dist(val_loader, model, criterion, device_id, args,min_dist=4.0,max_dist=5.0,model_name="def")
-        print("dist : 4-5 " + str(results_dict))
-        results_dict,loss_d=test.validate_dist(val_loader, model, criterion, device_id, args,min_dist=5.0,max_dist=6.0,model_name="def")
-        print("dist : 5-6 " + str(results_dict))
-
-    if device_id==3:
-        results_dict,loss_d=test.validate_dist(val_loader, model, criterion, device_id, args,min_dist=6.0,max_dist=8.0,model_name="def")
-        print("dist : 6-8 " + str(results_dict))
-        results_dict,loss_d=test.validate_dist(val_loader, model, criterion, device_id, args,min_dist=8.0,max_dist=10.0,model_name="def")
-        print("dist : 8-10 " + str(results_dict))
+    logger.info("dist : 1-2 " + str(results_dict2))
 
 print('lr='+str(args.max_lr))
 optimizer = optim.Adam(model_params,lr=0.0001)
@@ -203,9 +147,9 @@ for i in range(600):
         class_id = batch['class_id']
         gt_blur = batch['blur'].to(device_id)
 
-        if args.model_name=='defnet':
+        if args.blur_model=='defnet':
             depth_pred,blur_pred = model(input_RGB,flag_step2=True)
-        elif args.model_name=='midas':
+        elif args.blur_model=='midas':
             # blur_pred,depth_pred,_=model(input_RGB,return_rel_depth=True)
             depth_pred=model(input_RGB)
             blur_pred=midasouts['r1'][:,0,:,:]
@@ -264,12 +208,12 @@ for i in range(600):
             # print("val RMSE = %2.5f" %(rmse_total/n))
             # logging.info("val RMSE = " +str(rmse_total/n))
             # results_dict,loss_d=test.validate_dist(val_loader, def_model, criterion, device_id, args,min_dist=0.0,max_dist=1.0,model_name="def")
-            results_dict1,loss_d=test.validate_dist(val_loader, model, criterion, device_id, args,min_dist=0.0,max_dist=1.0,model_name="def")
+            results_dict1,loss_d=test.validate_dist(val_loader, model, criterion, device_id, args,min_dist=0.0,max_dist=1.0,model_name=args.blur_model)
             print("dist : 0-1 " + str(results_dict1))
-            logging.info("dist : 0-1 " + str(results_dict1))
-            results_dict2,loss_d=test.validate_dist(val_loader, model, criterion, device_id, args,min_dist=1.0,max_dist=2.0,model_name="def")
+            logger.info("dist : 0-1 " + str(results_dict1))
+            results_dict2,loss_d=test.validate_dist(val_loader, model, criterion, device_id, args,min_dist=1.0,max_dist=2.0,model_name=args.blur_model)
             print("dist : 1-2 " + str(results_dict2))
-            logging.info("dist : 1-2 " + str(results_dict2))
+            logger.info("dist : 1-2 " + str(results_dict2))
             # vali_dist()
 
             rmse=(results_dict1['rmse']+results_dict2['rmse'])*0.5
@@ -285,7 +229,7 @@ for i in range(600):
                     'best': best_loss,
                     'state_dict': model.state_dict(),
                     'optimize':optimizer.state_dict(),
-                    },  os.path.join(os.path.abspath(args.resultspth),(args.model_name+'_'+args.rgb_dir)+'.tar'))
+                    },  os.path.join(os.path.abspath(args.resultspth),(args.blur_model+'_'+args.rgb_dir)+'.tar'))
                     logging.info("saved model")
                     print('model saved')
             #get learning rate

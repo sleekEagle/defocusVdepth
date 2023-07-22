@@ -95,18 +95,14 @@ elif args.blur_model=='midas':
     blur_model.scratch.refinenet1.register_forward_hook(get_activation("r1",midasouts))
 
 if args.resume_blur_from:
-    # loading weights of the first step
+   # loading weights of the first step
     print('loading model....')
     logging.info("loading model....")
     print('model path :'+args.resume_blur_from)
     logging.info("model path : "+str(args.resume_blur_from))
     pretrained_dict = torch.load(args.resume_blur_from)
-    model_dict = blur_model.state_dict()
-    for param_tensor in model_dict:
-        for param_pre in pretrained_dict:
-            if param_tensor == param_pre:
-                model_dict.update({param_tensor: pretrained_dict[param_pre]})
-    blur_model.load_state_dict(model_dict)
+    blur_model.load_state_dict(pretrained_dict['state_dict'])
+    blur_model.eval()
 
 '''
 ************
@@ -140,6 +136,13 @@ Evauate the models
 '''
 logger.info('validating the blur model...')
 test.vali_dist(val_loader,blur_model,device_id,args,logger,args.blur_model)
+
+
+'''
+make combined model
+'''
+
+
 
 
 
