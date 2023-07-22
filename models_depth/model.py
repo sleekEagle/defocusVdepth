@@ -148,11 +148,13 @@ class VPDDepth(nn.Module):
         else:
             raise NotImplementedError
         conv_feats = self.encoder(x, class_ids)
+        #output of encoder: torch.Size([4, 1536, 16, 16])
 
         if h == 480 or h == 352:
             conv_feats = conv_feats[:, :, :-1, :-1]      
 
         out = self.decoder([conv_feats])
+        #output of decoder: torch.Size([4, 192, 480, 480])
         out_depth = self.last_layer_depth(out)
         out_depth = torch.sigmoid(out_depth) * self.max_depth
 

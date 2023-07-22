@@ -282,6 +282,8 @@ def validate_dist(val_loader, model, criterion_d, device_id, args,min_dist=0.0,m
             elif model_name=='vpd':
                 pred = model(input_RGB, class_ids=class_ids)
                 pred_d = pred['pred_d']
+            elif model_name=='combined':
+                pred_d=model(input_RGB,class_ids)
             else:
                 return -1
         if args.flip_test:

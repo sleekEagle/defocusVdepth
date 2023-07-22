@@ -29,6 +29,7 @@ from os.path import join
 from models_depth.AENET import AENet
 from models_depth.midas import MidasCore
 from models_depth.model import VPDDepth
+from models_depth.Selector import Selector
 
 
 metric_name = ['d1', 'd2', 'd3', 'abs_rel', 'sq_rel', 'rmse', 'rmse_log',
@@ -127,41 +128,63 @@ if args.resume_geometry_from:
     print('loaded weights')
     logging.info('loaded weights')
 
-geometry_model_params = geometry_model.parameters()
-blur_model_params = blur_model.parameters()
-
+criterion=torch.nn.MSELoss()
 
 '''
 Evauate the models
 '''
 logger.info('validating the blur model...')
-test.vali_dist(val_loader,blur_model,device_id,args,logger,args.blur_model)
+results_dict=test.validate_dist(val_loader, blur_model, criterion, device_id, args,min_dist=0.0,max_dist=2.0,model_name=args.blur_model)
+print("blur model error dist : 0-2 " + str(results_dict))
+logger.info("blur model error dist : 0-2 " + str(results_dict))
+
+logger.info('validating the geometric model...')
+results_dict=test.validate_dist(val_loader, geometry_model, criterion, device_id, args,min_dist=2.0,max_dist=10.0,model_name=args.geometry_model)
+print("geo model error dist : 2-10 " + str(results_dict))
+logger.info("geo model error dist : 2-10 " + str(results_dict))
 
 
 '''
 make combined model
 '''
+selectorNet=Selector(blur_model,geometry_model).to(device_id)
+model_params = selectorNet.parameters()
+optimizer = optim.Adam(model_params,lr=0.0001)
+selectorNet.train()
 
-def get_activation(name, bank):
-    def hook(model, input, output):
-        bank[name] = output
-    return hook
-outputs_blur={}
-blur_model.conv_end.register_forward_hook(get_activation("conv_end",outputs_blur))
+evalitr=10
+for i in range(600):
+    total_d_loss=0
+    for batch_idx, batch in enumerate(train_loader):
+        input_RGB = batch['image'].to(device_id)
+        depth_gt = batch['depth'].to(device_id)
+        class_id = batch['class_id']
+        gt_blur = batch['blur'].to(device_id)
 
-outputs_geo={}
-geometry_model.encoder.register_forward_hook(get_activation("encoder",outputs_geo))
+        with torch.no_grad():
+            geometry_model(input_RGB,class_id)
+        
+        depth_pred=selectorNet(input_RGB,class_id)
+        optimizer.zero_grad()
+        mask=(depth_gt>0.0).detach_()
+        loss=criterion(depth_pred.squeeze(dim=1)[mask], depth_gt[mask])
+        total_d_loss+=loss.item()
+        loss.backward()
+        optimizer.step()
+    print("Epochs=%3d depth loss=%5.4f" %(i,total_d_loss/len(train_loader)))  
+    logging.info("Epochs=%3d depth loss=%5.4f",i,total_d_loss/len(train_loader))
+    if (i+1)%evalitr==0:
+        logger.info('validating the selectorNet model...')
+        results_dict=test.validate_dist(val_loader, selectorNet, criterion, device_id, args,min_dist=0.0,max_dist=2.0,model_name="combined")
+        print("dist : 0-2 " + str(results_dict))
+        logger.info("dist : 0-2 " + str(results_dict))
+
+        results_dict=test.validate_dist(val_loader, selectorNet, criterion, device_id, args,min_dist=2.0,max_dist=10.0,model_name="combined")
+        print("dist : 2-10 " + str(results_dict))
+        logger.info("dist : 2-10 " + str(results_dict))
 
 
-for batch_idx, batch in enumerate(train_loader):
-    input_RGB = batch['image'].to(device_id)
-    depth_gt = batch['depth'].to(device_id)
-    class_id = batch['class_id']
-    gt_blur = batch['blur'].to(device_id)
 
-out=blur_model(input_RGB,flag_step2=True)
-input_RGB=input_RGB[0:1,:,:,:]
-geometry_model(input_RGB,class_ids=class_id)
 
 
 

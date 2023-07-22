@@ -27,12 +27,12 @@ class BaseOptions():
         # base configs
         parser.add_argument('--exp_name',   type=str, default='')
         parser.add_argument('--gpu_or_cpu',   type=str, default='gpu')
-        parser.add_argument('--data_path',    type=str, default='D:\\data\\')
+        parser.add_argument('--data_path',    type=str, default='/p/blurdepth/data/')
         parser.add_argument('--rgb_dir',    type=str, default='refocused_f_25_fdist_2')
         parser.add_argument('--depth_dir',    type=str, default='rawDepth')
         parser.add_argument('--blur_model',    type=str, default='defnet')
         parser.add_argument('--geometry_model',    type=str, default='vpd')
-        parser.add_argument('--resultspth',    type=str, default='C:\\Users\\lahir\\models\\VPD\\')
+        parser.add_argument('--resultspth',    type=str, default='/p/blurdepth/models/defnet/')
         parser.add_argument('--dataset',      type=str, default='nyudepthv2',
                             choices=['nyudepthv2', 'kitti', 'imagepath'])
         parser.add_argument('--batch_size',   type=int, default=4)
