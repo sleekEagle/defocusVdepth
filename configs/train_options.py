@@ -50,3 +50,4 @@ class TrainOptions(BaseOptions):
         parser.add_argument('--freeze_encoder',  type=int, default=1)
         parser.add_argument('--freeze_decoder',  type=int, default=1)
         return parser
+    

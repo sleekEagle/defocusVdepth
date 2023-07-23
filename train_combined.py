@@ -131,15 +131,15 @@ criterion=torch.nn.MSELoss()
 '''
 Evauate the models
 '''
-logger.info('validating the blur model...')
-results_dict=test.validate_dist(val_loader, blur_model, criterion, device_id, args,min_dist=0.0,max_dist=2.0,model_name=args.blur_model)
-print("blur model error dist : 0-2 " + str(results_dict))
-logger.info("blur model error dist : 0-2 " + str(results_dict))
+# logger.info('validating the blur model...')
+# results_dict=test.validate_dist(val_loader, blur_model, criterion, device_id, args,min_dist=0.0,max_dist=2.0,model_name=args.blur_model)
+# print("blur model error dist : 0-2 " + str(results_dict))
+# logger.info("blur model error dist : 0-2 " + str(results_dict))
 
-logger.info('validating the geometric model...')
-results_dict=test.validate_dist(val_loader, geometry_model, criterion, device_id, args,min_dist=2.0,max_dist=10.0,model_name=args.geometry_model)
-print("geo model error dist : 2-10 " + str(results_dict))
-logger.info("geo model error dist : 2-10 " + str(results_dict))
+# logger.info('validating the geometric model...')
+# results_dict=test.validate_dist(val_loader, geometry_model, criterion, device_id, args,min_dist=2.0,max_dist=10.0,model_name=args.geometry_model)
+# print("geo model error dist : 2-10 " + str(results_dict))
+# logger.info("geo model error dist : 2-10 " + str(results_dict))
 
 
 '''
@@ -160,8 +160,19 @@ if args.resume_selector_from:
 model_params = selectorNet.parameters()
 optimizer = optim.Adam(model_params,lr=0.0001)
 selectorNet.train()
+selectorNet.blur_model.train()
 
 evalitr=10
+
+logger.info('validating the selectorNet model...')
+results_dict=test.validate_dist(val_loader, selectorNet, criterion, device_id, args,min_dist=0.0,max_dist=2.0,model_name="combined")
+print("dist : 0-2 " + str(results_dict))
+logger.info("dist : 0-2 " + str(results_dict))
+
+results_dict=test.validate_dist(val_loader, selectorNet, criterion, device_id, args,min_dist=2.0,max_dist=10.0,model_name="combined")
+print("dist : 2-10 " + str(results_dict))
+logger.info("dist : 2-10 " + str(results_dict))
+
 for i in range(600):
     total_d_loss=0
     for batch_idx, batch in enumerate(train_loader):
