@@ -182,7 +182,7 @@ for i in range(600):
 
         depth_pred=selectorNet(input_RGB,class_id)
         optimizer.zero_grad()
-        mask=(depth_gt>0.0).detach_()
+        mask=(depth_gt>0.0)*(depth_gt<2.0).detach_()
         loss=criterion(depth_pred.squeeze(dim=1)[mask], depth_gt[mask])
         total_d_loss+=loss.item()
         loss.backward()
