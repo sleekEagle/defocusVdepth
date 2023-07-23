@@ -101,7 +101,6 @@ if args.resume_blur_from:
     logging.info("loading blur model from path : "+str(args.resume_blur_from))
     pretrained_dict = torch.load(args.resume_blur_from)
     blur_model.load_state_dict(pretrained_dict['state_dict'])
-    blur_model.eval()
 
 '''
 ************

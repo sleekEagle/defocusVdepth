@@ -28,9 +28,7 @@ class Selector(nn.Module):
         )
 
         self.conv_selector=nn.Sequential(
-            nn.Conv2d(32, 32, 3, stride=1, padding=1),
-            nn.ReLU(),
-            nn.Conv2d(32, 16, 3, stride=1, padding=1),
+            nn.Conv2d(16, 16, 3, stride=1, padding=1),
             nn.ReLU(),
             nn.Conv2d(16, 2, 3, stride=1, padding=1),
             nn.Softmax(dim=1)
@@ -41,8 +39,8 @@ class Selector(nn.Module):
         blur_model_params = self.blur_model.parameters()
         for p in geometry_model_params:
             p.requires_grad = False
-        # for p in blur_model_params:
-        #     p.requires_grad = False
+        for p in blur_model_params:
+            p.requires_grad = False
 
     def forward(self,input_RGB,class_id):
         with torch.no_grad():
@@ -53,7 +51,8 @@ class Selector(nn.Module):
         #obtainig features
         blur_features=self.blur_bridge(self.outputs_blur['conv_end'])
         geo_features=self.geo_bridge(self.outputs_geo['decoder'])
-        selector_feat=torch.cat((blur_features,geo_features),dim=1)
+        # selector_feat=torch.cat((blur_features,geo_features),dim=1)
+        selector_feat=geo_features
         #selector_feat:torch.Size([bs, 32, 480, 480])
         weights = self.conv_selector(selector_feat)
         d_pred_cat=torch.cat((blur_depth,geometry_depth),dim=1)
