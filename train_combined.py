@@ -170,9 +170,6 @@ for i in range(600):
         class_id = batch['class_id']
         gt_blur = batch['blur'].to(device_id)
 
-        with torch.no_grad():
-            geometry_model(input_RGB,class_id)
-        
         depth_pred=selectorNet(input_RGB,class_id)
         optimizer.zero_grad()
         mask=(depth_gt>0.0).detach_()

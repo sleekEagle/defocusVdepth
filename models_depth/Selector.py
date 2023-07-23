@@ -18,8 +18,17 @@ class Selector(nn.Module):
         self.geometry_model.decoder.register_forward_hook(get_activation("decoder",self.outputs_geo))
         #output of decoder: torch.Size([bs, 192, 480, 480])
 
+        self.blur_bridge=nn.Sequential(
+            nn.Conv2d(16, 16, 3, stride=1, padding=1),
+            nn.ReLU()
+        )
+        self.geo_bridge=nn.Sequential(
+            nn.Conv2d(192, 16, 3, stride=1, padding=1),
+            nn.ReLU()
+        )
+
         self.conv_selector=nn.Sequential(
-            nn.Conv2d(208, 32, 3, stride=1, padding=1),
+            nn.Conv2d(32, 32, 3, stride=1, padding=1),
             nn.ReLU(),
             nn.Conv2d(32, 16, 3, stride=1, padding=1),
             nn.ReLU(),
@@ -42,8 +51,10 @@ class Selector(nn.Module):
             #blur_depth:torch.Size([4, 1, 480, 480])
             #geo_depth:torch.Size([4, 1, 480, 480])
         #obtainig features
-        selector_feat=torch.cat((self.outputs_blur['conv_end'],self.outputs_geo['decoder']),dim=1)
-        #selector_feat :torch.Size([bs, 208, 480, 480])
+        blur_features=self.blur_bridge(self.outputs_blur['conv_end'])
+        geo_features=self.geo_bridge(self.outputs_geo['decoder'])
+        selector_feat=torch.cat((blur_features,geo_features),dim=1)
+        #selector_feat:torch.Size([bs, 32, 480, 480])
         weights = self.conv_selector(selector_feat)
         d_pred_cat=torch.cat((blur_depth,geometry_depth),dim=1)
         final_depth=torch.unsqueeze(torch.sum(d_pred_cat*weights,dim=1),dim=1)
