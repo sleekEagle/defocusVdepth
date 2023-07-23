@@ -6,7 +6,6 @@ from datetime import datetime
 import torch
 import torch.optim as optim
 import torch.backends.cudnn as cudnn
-import torch.optim as optim
 import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel as DDP
 import sys 
@@ -140,7 +139,6 @@ evalitr=10
 best_loss=0
 for i in range(600):
     total_d_loss,total_b_loss=0,0
-    start = time.time()
     for batch_idx, batch in enumerate(train_loader):
         input_RGB = batch['image'].to(device_id)
         depth_gt = batch['depth'].to(device_id)
@@ -174,7 +172,6 @@ for i in range(600):
     scheduler.step()
     print("Epochs=%3d blur loss=%5.4f  depth loss=%5.4f" %(i,total_b_loss/len(train_loader),total_d_loss/len(train_loader)))  
     logging.info("Epochs=%3d blur loss=%5.4f  depth loss=%5.4f" , i,total_b_loss/len(train_loader),total_d_loss/len(train_loader))
-    end = time.time()    
 
     #print("Elapsed time = %11.1f" %(end-start))    
     if (i+1)%evalitr==0:

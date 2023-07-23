@@ -32,8 +32,8 @@ class Selector(nn.Module):
         blur_model_params = self.blur_model.parameters()
         for p in geometry_model_params:
             p.requires_grad = False
-        for p in blur_model_params:
-            p.requires_grad = False
+        # for p in blur_model_params:
+        #     p.requires_grad = False
 
     def forward(self,input_RGB,class_id):
         with torch.no_grad():
