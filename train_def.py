@@ -135,7 +135,7 @@ def get_lr(optimizer):
 #iterate though dataset
 print('train_loader len='+str(len(train_loader)))
 logging.info('train_loader len=%s',str(len(train_loader)))
-evalitr=2
+evalitr=10
 best_loss=0
 
 
