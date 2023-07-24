@@ -57,4 +57,4 @@ class Selector(nn.Module):
         weights = self.conv_selector(selector_feat)
         d_pred_cat=torch.cat((blur_depth,geometry_depth),dim=1)
         final_depth=torch.unsqueeze(torch.sum(d_pred_cat*weights,dim=1),dim=1)
-        return final_depth
+        return final_depth,weights

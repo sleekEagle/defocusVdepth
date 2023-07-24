@@ -180,10 +180,14 @@ for i in range(600):
         class_id = batch['class_id']
         gt_blur = batch['blur'].to(device_id)
 
-        depth_pred=selectorNet(input_RGB,class_id)
+        depth_pred,weight_pred=selectorNet(input_RGB,class_id)
         optimizer.zero_grad()
-        mask=(depth_gt>0.0)*(depth_gt<2.0).detach_()
-        loss=criterion(depth_pred.squeeze(dim=1)[mask], depth_gt[mask])
+        mask=(depth_gt>0.0).detach_()
+        weight_mask=(depth_gt<2.0).int()
+        gt_weight=torch.zeros_like(weight_pred)
+        gt_weight[:,0,:,:]=weight_mask
+        loss=criterion(gt_weight,weight_pred)
+        # loss=criterion(depth_pred.squeeze(dim=1)[mask], depth_gt[mask])
         total_d_loss+=loss.item()
         loss.backward()
         optimizer.step()
