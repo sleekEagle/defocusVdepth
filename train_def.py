@@ -100,10 +100,10 @@ elif args.blur_model=='midas':
 
 model_params = model.parameters()
 criterion=torch.nn.MSELoss()
+selector_criterion = torch.nn.BCELoss()
 #load the saved weights to the model
 print('resume from :'+str(args.resume_blur_from))
 
-args.resume_blur_from='C:\\Users\\lahir\\Documents\\refocused_f_25_fdist_2.tar'
 if args.resume_blur_from:
     # loading weights of the first step
     print('loading model....')
@@ -135,10 +135,37 @@ def get_lr(optimizer):
 #iterate though dataset
 print('train_loader len='+str(len(train_loader)))
 logging.info('train_loader len=%s',str(len(train_loader)))
-evalitr=10
+evalitr=2
 best_loss=0
+
+
+def validate_selector():
+    total_acc=0
+    for batch_idx, batch in enumerate(val_loader):
+        input_RGB = batch['image'].to(device_id)
+        depth_gt = batch['depth'].to(device_id)
+        input_RGB=input_RGB[:,:,:,0:480]
+        depth_gt=depth_gt[:,:,0:480]
+
+        if args.blur_model=='defnet':
+            depth_pred,blur_pred,selector_pred = model(input_RGB,flag_step2=True)
+            selector_pred=torch.squeeze(selector_pred,dim=1)
+        selector_pred[selector_pred>0.5]=1
+        selector_pred[selector_pred<=0.5]=0
+
+        gt_selection=torch.zeros_like(selector_pred)
+        gt_selection[depth_gt>2.0]=1.0
+
+        t=selector_pred*gt_selection
+        acc=len(t[t==1])/(t.shape[-1]*t.shape[-2])
+        total_acc+=acc
+    print('selector acc= %5.4f'%(total_acc/len(val_loader)))
+    logger.info('selector acc= %5.4f',(total_acc/len(val_loader)))
+
+
+torch.autograd.set_detect_anomaly(True)
 for i in range(600):
-    total_d_loss,total_b_loss=0,0
+    total_d_loss,total_b_loss,total_s_loss=0,0,0
     for batch_idx, batch in enumerate(train_loader):
         input_RGB = batch['image'].to(device_id)
         depth_gt = batch['depth'].to(device_id)
@@ -146,7 +173,8 @@ for i in range(600):
         gt_blur = batch['blur'].to(device_id)
 
         if args.blur_model=='defnet':
-            depth_pred,blur_pred = model(input_RGB,flag_step2=True)
+            depth_pred,blur_pred,selector_pred = model(input_RGB,flag_step2=True)
+            # torch.sum(torch.isnan(selector_pred))
         elif args.blur_model=='midas':
             # blur_pred,depth_pred,_=model(input_RGB,return_rel_depth=True)
             depth_pred=model(input_RGB)
@@ -157,21 +185,31 @@ for i in range(600):
 
         optimizer.zero_grad()
 
-        mask=(depth_gt>0.0)*(depth_gt<10.0).detach_()
-        loss_d=criterion(depth_pred.squeeze(dim=1)[mask], depth_gt[mask])
-        loss_b=criterion(blur_pred.squeeze(dim=1)[mask],gt_blur[mask])
+        d_mask=(depth_gt>0.0)*(depth_gt<2.0).detach_()
+        s_mask=(depth_gt>0.0).detach_()
+        loss_d=criterion(depth_pred.squeeze(dim=1)[d_mask], depth_gt[d_mask])
+        loss_b=criterion(blur_pred.squeeze(dim=1)[d_mask],gt_blur[d_mask])
+
+        #deal with the selector
+        selector_pred=torch.squeeze(selector_pred,dim=1)
+        gt_selection=torch.zeros_like(selector_pred)
+        gt_selection[depth_gt>2.0]=1.0
+        loss_s=criterion(gt_selection[s_mask],selector_pred[s_mask])
+
+
         if(torch.isnan(loss_d) or torch.isnan(loss_b)):
             # print('nan in losses')
             logging.info('nan in losses')
             continue
-        loss=loss_d+loss_b
+        loss=loss_s+loss_b+loss_d
         total_d_loss+=loss_d.item()
         total_b_loss+=loss_b.item()
-        loss.backward()
+        total_s_loss+=loss_s.item()
+        loss.backward()    
         optimizer.step()
     scheduler.step()
-    print("Epochs=%3d blur loss=%5.4f  depth loss=%5.4f" %(i,total_b_loss/len(train_loader),total_d_loss/len(train_loader)))  
-    logging.info("Epochs=%3d blur loss=%5.4f  depth loss=%5.4f" , i,total_b_loss/len(train_loader),total_d_loss/len(train_loader))
+    print("Epochs=%3d blur loss=%5.4f  depth loss=%5.4f selector loss=%5.4f" %(i,total_b_loss/len(train_loader),total_d_loss/len(train_loader),total_s_loss/len(train_loader)))  
+    logger.info("Epochs=%3d blur loss=%5.4f  depth loss=%5.4f selector loss=%5.4f" , i,total_b_loss/len(train_loader),total_d_loss/len(train_loader),total_s_loss/len(train_loader))
 
     #print("Elapsed time = %11.1f" %(end-start))    
     if (i+1)%evalitr==0:
@@ -212,6 +250,7 @@ for i in range(600):
             print("dist : 1-2 " + str(results_dict2))
             logger.info("dist : 1-2 " + str(results_dict2))
             # vali_dist()
+            validate_selector()
 
             rmse=(results_dict1['rmse']+results_dict2['rmse'])*0.5
             if(i+1==evalitr):
@@ -227,13 +266,17 @@ for i in range(600):
                     'state_dict': model.state_dict(),
                     'optimize':optimizer.state_dict(),
                     },  os.path.join(os.path.abspath(args.resultspth),(args.blur_model+'_'+args.rgb_dir)+'.tar'))
-                    logging.info("saved model")
+                    logger.info("saved model")
                     print('model saved')
             #get learning rate
             current_lr=get_lr(optimizer)
             print('current learning rate='+str(current_lr))
-            logging.info("current learning rate="+str(current_lr))
+            logger.info("current learning rate="+str(current_lr))
         model.train()
+
+
+
+
 
             
 

@@ -109,21 +109,21 @@ load geometry model
 '''
 if args.geometry_model=='vpd':
     geometry_model = VPDDepth(args=args).to(device_id)
-#get model and load weights
-if args.resume_geometry_from:
-    from collections import OrderedDict
-    print('loading weigths to the model....')
-    logging.info('loading weigths to the model....')
-    cudnn.benchmark = True
-    #load weights to the model
-    print('loading from :'+str(args.resume_geometry_from))
-    logging.info('loading from :'+str(args.resume_geometry_from))
-    model_weight = torch.load(args.resume_geometry_from)['model']
-    if 'module' in next(iter(model_weight.items()))[0]:
-        model_weight = OrderedDict((k[7:], v) for k, v in model_weight.items())
-    geometry_model.load_state_dict(model_weight, strict=False)
-    print('loaded weights')
-    logging.info('loaded weights')
+    #get model and load weights
+    if args.resume_geometry_from:
+        from collections import OrderedDict
+        print('loading weigths to the model....')
+        logging.info('loading weigths to the model....')
+        cudnn.benchmark = True
+        #load weights to the model
+        print('loading from :'+str(args.resume_geometry_from))
+        logging.info('loading from :'+str(args.resume_geometry_from))
+        model_weight = torch.load(args.resume_geometry_from)['model']
+        if 'module' in next(iter(model_weight.items()))[0]:
+            model_weight = OrderedDict((k[7:], v) for k, v in model_weight.items())
+        geometry_model.load_state_dict(model_weight, strict=False)
+        print('loaded weights')
+        logging.info('loaded weights')
 
 criterion=torch.nn.MSELoss()
 
@@ -144,7 +144,7 @@ Evauate the models
 '''
 make combined model
 '''
-selectorNet=Selector(blur_model,geometry_model).to(device_id)
+selectorNet=Selector(blur_model,freezeblur=False).to(device_id)
 '''
 Load weight from file if given
 '''
@@ -161,16 +161,20 @@ optimizer = optim.Adam(model_params,lr=0.0001)
 selectorNet.train()
 selectorNet.blur_model.train()
 
+
+# for p in selectorNet.blur_model.parameters():
+#     print(p.requires_grad)
+
 evalitr=10
 
-logger.info('validating the selectorNet model...')
-results_dict=test.validate_dist(val_loader, selectorNet, criterion, device_id, args,min_dist=0.0,max_dist=2.0,model_name="combined")
-print("dist : 0-2 " + str(results_dict))
-logger.info("dist : 0-2 " + str(results_dict))
+# logger.info('validating the selectorNet model...')
+# results_dict=test.validate_dist(val_loader, selectorNet, criterion, device_id, args,min_dist=0.0,max_dist=2.0,model_name="combined")
+# print("dist : 0-2 " + str(results_dict))
+# logger.info("dist : 0-2 " + str(results_dict))
 
-results_dict=test.validate_dist(val_loader, selectorNet, criterion, device_id, args,min_dist=2.0,max_dist=10.0,model_name="combined")
-print("dist : 2-10 " + str(results_dict))
-logger.info("dist : 2-10 " + str(results_dict))
+# results_dict=test.validate_dist(val_loader, selectorNet, criterion, device_id, args,min_dist=2.0,max_dist=10.0,model_name="combined")
+# print("dist : 2-10 " + str(results_dict))
+# logger.info("dist : 2-10 " + str(results_dict))
 
 for i in range(600):
     total_d_loss=0
@@ -180,30 +184,33 @@ for i in range(600):
         class_id = batch['class_id']
         gt_blur = batch['blur'].to(device_id)
 
-        depth_pred,weight_pred=selectorNet(input_RGB,class_id)
+        selector_pred=selectorNet(input_RGB,class_id)
+        selector_pred=torch.squeeze(selector_pred,dim=1)
         optimizer.zero_grad()
         mask=(depth_gt>0.0).detach_()
-        weight_mask=(depth_gt<2.0).int()
-        gt_weight=torch.zeros_like(weight_pred)
-        gt_weight[:,0,:,:]=weight_mask
-        loss=criterion(gt_weight,weight_pred)
+        gt_selection=torch.zeros_like(selector_pred)
+        gt_selection[depth_gt>2.0]=1.0
+        # weight_mask=(depth_gt<2.0).int()
+        # gt_weight=torch.zeros_like(weight_pred)
+        # gt_weight[:,0,:,:]=weight_mask
+        loss=criterion(gt_selection,selector_pred)
         # loss=criterion(depth_pred.squeeze(dim=1)[mask], depth_gt[mask])
         total_d_loss+=loss.item()
         loss.backward()
         optimizer.step()
     print("Epochs=%3d depth loss=%5.4f" %(i,total_d_loss/len(train_loader)))  
     logging.info("Epochs=%3d depth loss=%5.4f",i,total_d_loss/len(train_loader))
-    if (i+1)%evalitr==0:
-        logger.info('validating the selectorNet model...')
-        results_dict=test.validate_dist(val_loader, selectorNet, criterion, device_id, args,min_dist=0.0,max_dist=2.0,model_name="combined")
-        print("dist : 0-2 " + str(results_dict))
-        logger.info("dist : 0-2 " + str(results_dict))
+    # if (i+1)%evalitr==0:
+    #     logger.info('validating the selectorNet model...')
+    #     results_dict=test.validate_dist(val_loader, selectorNet, criterion, device_id, args,min_dist=0.0,max_dist=2.0,model_name="combined")
+    #     print("dist : 0-2 " + str(results_dict))
+    #     logger.info("dist : 0-2 " + str(results_dict))
 
-        results_dict=test.validate_dist(val_loader, selectorNet, criterion, device_id, args,min_dist=2.0,max_dist=10.0,model_name="combined")
-        print("dist : 2-10 " + str(results_dict))
-        logger.info("dist : 2-10 " + str(results_dict))
+    #     results_dict=test.validate_dist(val_loader, selectorNet, criterion, device_id, args,min_dist=2.0,max_dist=10.0,model_name="combined")
+    #     print("dist : 2-10 " + str(results_dict))
+    #     logger.info("dist : 2-10 " + str(results_dict))
 
-        #save model
-        torch.save({'state_dict': selectorNet.conv_selector.state_dict()},
-                    os.path.join(os.path.abspath(args.resultspth),('selector_'+args.rgb_dir)+'.tar'))
+    #     #save model
+    #     torch.save({'state_dict': selectorNet.conv_selector.state_dict()},
+    #                 os.path.join(os.path.abspath(args.resultspth),('selector_'+args.rgb_dir)+'.tar'))
 
