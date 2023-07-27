@@ -5,6 +5,18 @@
 
 import torch
 
+# pred=torch.rand(1,20,20)*4
+# target=torch.rand(1,20,20)*4
+
+def binary_eval(pred,target,value):
+    pred_=pred<value
+    target_=target<value
+    acc_=pred_*target_
+    acc=(torch.sum(acc_)/len(torch.flatten(acc_))).item()
+    return {'acc:':acc}
+
+
+
 
 def eval_depth(pred, target):
     assert pred.shape == target.shape

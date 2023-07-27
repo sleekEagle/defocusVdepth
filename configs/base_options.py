@@ -31,7 +31,7 @@ class BaseOptions():
         parser.add_argument('--rgb_dir',    type=str, default='refocused_f_25_fdist_2')
         parser.add_argument('--depth_dir',    type=str, default='rawDepth')
         parser.add_argument('--blur_model',    type=str, default='defnet')
-        parser.add_argument('--geometry_model',    type=str, default='')
+        parser.add_argument('--geometry_model',    type=str, default='vpd')
         parser.add_argument('--resultspth',    type=str, default='C:\\Users\\lahir\\models\\VPD\\')
         parser.add_argument('--dataset',      type=str, default='nyudepthv2',
                             choices=['nyudepthv2', 'kitti', 'imagepath'])

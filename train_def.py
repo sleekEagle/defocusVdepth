@@ -113,15 +113,15 @@ if args.resume_blur_from:
     pretrained_dict = torch.load(args.resume_blur_from)
     model.load_state_dict(pretrained_dict['state_dict'])
     model.eval()
-    #evaluating the loaded model
-    print('evaluating model...')
-    logger.info('evaluating model...')
-    results_dict1,loss_d=test.validate_dist(val_loader, model, criterion, device_id, args,min_dist=0.0,max_dist=1.0,model_name=args.blur_model)
-    print("dist : 0-1 " + str(results_dict1))
-    logger.info("dist : 0-1 " + str(results_dict1))
-    results_dict2,loss_d=test.validate_dist(val_loader, model, criterion, device_id, args,min_dist=1.0,max_dist=2.0,model_name=args.blur_model)
-    print("dist : 1-2 " + str(results_dict2))
-    logger.info("dist : 1-2 " + str(results_dict2))
+    # #evaluating the loaded model
+    # print('evaluating model...')
+    # logger.info('evaluating model...')
+    # results_dict1,loss_d=test.validate_dist(val_loader, model, criterion, device_id, args,min_dist=0.0,max_dist=1.0,model_name=args.blur_model)
+    # print("dist : 0-1 " + str(results_dict1))
+    # logger.info("dist : 0-1 " + str(results_dict1))
+    # results_dict2,loss_d=test.validate_dist(val_loader, model, criterion, device_id, args,min_dist=1.0,max_dist=2.0,model_name=args.blur_model)
+    # print("dist : 1-2 " + str(results_dict2))
+    # logger.info("dist : 1-2 " + str(results_dict2))
 
 print('lr='+str(args.max_lr))
 optimizer = optim.Adam(model_params,lr=0.0001)
@@ -137,31 +137,6 @@ print('train_loader len='+str(len(train_loader)))
 logging.info('train_loader len=%s',str(len(train_loader)))
 evalitr=10
 best_loss=0
-
-
-def validate_selector():
-    total_acc=0
-    for batch_idx, batch in enumerate(val_loader):
-        input_RGB = batch['image'].to(device_id)
-        depth_gt = batch['depth'].to(device_id)
-        input_RGB=input_RGB[:,:,:,0:480]
-        depth_gt=depth_gt[:,:,0:480]
-
-        if args.blur_model=='defnet':
-            depth_pred,blur_pred,selector_pred = model(input_RGB,flag_step2=True)
-            selector_pred=torch.squeeze(selector_pred,dim=1)
-        selector_pred[selector_pred>0.5]=1
-        selector_pred[selector_pred<=0.5]=0
-
-        gt_selection=torch.zeros_like(selector_pred)
-        gt_selection[depth_gt>2.0]=1.0
-
-        t=selector_pred*gt_selection
-        acc=len(t[t==1])/(t.shape[-1]*t.shape[-2])
-        total_acc+=acc
-    print('selector acc= %5.4f'%(total_acc/len(val_loader)))
-    logger.info('selector acc= %5.4f',(total_acc/len(val_loader)))
-
 
 torch.autograd.set_detect_anomaly(True)
 for i in range(600):
@@ -250,7 +225,6 @@ for i in range(600):
             print("dist : 1-2 " + str(results_dict2))
             logger.info("dist : 1-2 " + str(results_dict2))
             # vali_dist()
-            validate_selector()
 
             rmse=(results_dict1['rmse']+results_dict2['rmse'])*0.5
             if(i+1==evalitr):
