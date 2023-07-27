@@ -314,7 +314,7 @@ def validate_dist(val_loader, model, criterion_d, device_id, args,min_dist=0.0,m
         pred_crop, gt_crop = metrics.cropping_img(args, pred_d, depth_gt)
         computed_result = metrics.eval_depth(pred_crop, gt_crop)
         binary_acc=metrics.binary_eval(pred_crop,gt_crop,value=2.0)
-        computed_result['binary_acc']=binary_acc
+        computed_result['binary_acc']=binary_acc['acc']
         if math.isnan(computed_result['rmse']):
             continue
         #if rank == 0:
