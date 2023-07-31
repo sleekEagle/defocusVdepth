@@ -1,3 +1,4 @@
 [submodule "stable-diffusion"]
 	path = stable-diffusion
 	url = https://github.com/runwayml/stable-diffusion.git
+	ignore = dirty
