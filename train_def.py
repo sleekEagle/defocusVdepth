@@ -93,10 +93,7 @@ elif args.blur_model=='midas':
     freeze_midas_bn=False
     model = torch.hub.load("intel-isl/MiDaS", midas_model_type,pretrained=use_pretrained_midas).to(device_id)
     model.scratch.refinenet1.register_forward_hook(get_activation("r1",midasouts))
-   
-    # model = MidasCore.build(midas_model_type=midas_model_type, use_pretrained_midas=use_pretrained_midas,
-    #                             train_midas=train_midas, fetch_features=True, freeze_bn=freeze_midas_bn,
-    #                             img_size_in=256,img_size_out=256).to(device_id)
+
 
 model_params = model.parameters()
 criterion=torch.nn.MSELoss()
@@ -113,15 +110,6 @@ if args.resume_blur_from:
     pretrained_dict = torch.load(args.resume_blur_from)
     model.load_state_dict(pretrained_dict['state_dict'])
     model.eval()
-    # #evaluating the loaded model
-    # print('evaluating model...')
-    # logger.info('evaluating model...')
-    # results_dict1,loss_d=test.validate_dist(val_loader, model, criterion, device_id, args,min_dist=0.0,max_dist=1.0,model_name=args.blur_model)
-    # print("dist : 0-1 " + str(results_dict1))
-    # logger.info("dist : 0-1 " + str(results_dict1))
-    # results_dict2,loss_d=test.validate_dist(val_loader, model, criterion, device_id, args,min_dist=1.0,max_dist=2.0,model_name=args.blur_model)
-    # print("dist : 1-2 " + str(results_dict2))
-    # logger.info("dist : 1-2 " + str(results_dict2))
 
 print('lr='+str(args.max_lr))
 optimizer = optim.Adam(model_params,lr=0.0001)
@@ -179,43 +167,16 @@ for i in range(600):
 
     #print("Elapsed time = %11.1f" %(end-start))    
     if (i+1)%evalitr==0:
-        # print('validating...')
-        # results_dict,loss_d=test.validate_dist(val_loader, def_model, criterion_d, device_id, args,min_dist=0.0,max_dist=1.0,model_name="def")
-        # print(results_dict)
-        # rmse=vali_dist()
         model.eval()
         rmse_total=0
         n=0
         with torch.no_grad():
-            # for batch_idx, batch in enumerate(val_loader):
-            #     input_RGB = batch['image'].to(device_id)
-            #     depth_gt = batch['depth'].to(device_id)
-            #     class_id = batch['class_id']
-            #     gt_blur = batch['blur'].to(device_id)
-
-            #     s1_fcs = torch.ones([input_RGB.shape[0],1, input_RGB.shape[2], input_RGB.shape[3]])
-            #     s1_fcs*=args.fdist
-            #     s1_fcs = s1_fcs.float().to(device_id)
-            #     depth_pred,blur_pred = def_model(input_RGB,flag_step2=True,x2=s1_fcs)
-
-            #     mask=(torch.squeeze(depth_gt)>0)*(torch.squeeze(depth_gt)<2).detach_()
-            #     #calc rmse
-            #     diff=torch.squeeze(depth_gt)-torch.psqueeze(depth_pred)
-            #     rmse=torch.sqrt(torch.mean(torch.pow(diff[mask],2))).item()
-            #     if(rmse!=rmse):
-            #         continue
-            #     rmse_total+=rmse
-            #     n+=1
-            # print("val RMSE = %2.5f" %(rmse_total/n))
-            # logging.info("val RMSE = " +str(rmse_total/n))
-            # results_dict,loss_d=test.validate_dist(val_loader, def_model, criterion, device_id, args,min_dist=0.0,max_dist=1.0,model_name="def")
             results_dict1,loss_d=test.validate_dist(val_loader, model, criterion, device_id, args,min_dist=0.0,max_dist=1.0,model_name=args.blur_model)
             print("dist : 0-1 " + str(results_dict1))
             logger.info("dist : 0-1 " + str(results_dict1))
             results_dict2,loss_d=test.validate_dist(val_loader, model, criterion, device_id, args,min_dist=1.0,max_dist=2.0,model_name=args.blur_model)
             print("dist : 1-2 " + str(results_dict2))
             logger.info("dist : 1-2 " + str(results_dict2))
-            # vali_dist()
 
             rmse=(results_dict1['rmse']+results_dict2['rmse'])*0.5
             if(i+1==evalitr):
