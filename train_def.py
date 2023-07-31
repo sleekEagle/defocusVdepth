@@ -58,8 +58,7 @@ logging.info('Starting training')
 logging.info(args)
 
 # Dataset setting
-dataset_kwargs = {'dataset_name': args.dataset, 'data_path': args.data_path,'rgb_dir':args.rgb_dir, 'depth_dir':args.depth_dir,
-                  'selected_dirs':args.selected_dirs}
+dataset_kwargs = {'dataset_name': args.dataset, 'data_path': args.data_path,'rgb_dir':args.rgb_dir, 'depth_dir':args.depth_dir}
 dataset_kwargs['crop_size'] = (args.crop_h, args.crop_w)
 
 train_dataset = get_dataset(**dataset_kwargs,is_train=True)
@@ -72,14 +71,14 @@ val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=1,
                                          num_workers=0,pin_memory=True)
 
 '''
-import AENET used for defocus blur based depth prediction
+Load models
 '''
-
-ch_inp_num = 3
-ch_out_num = 1
-def_model = AENet(ch_inp_num, 1, 16, flag_step2=True).to(device_id)
-model_params = def_model.parameters()
-criterion=torch.nn.MSELoss()
+if args.blur_model is 'defnet':
+    ch_inp_num = 3
+    ch_out_num = 1
+    def_model = AENet(ch_inp_num, 1, 16, flag_step2=True).to(device_id)
+    model_params = def_model.parameters()
+    criterion=torch.nn.MSELoss()
 
 # print('validating...')
 def vali_dist():
@@ -150,46 +149,15 @@ for i in range(1000):
         depth_gt = batch['depth'].to(device_id)
         class_id = batch['class_id']
         gt_blur = batch['blur'].to(device_id)
-        fdist=batch['fdist']
 
-        s1_fcs = torch.ones([input_RGB.shape[0],1, input_RGB.shape[2], input_RGB.shape[3]])
-        for fd_,fd in enumerate(fdist):
-            s1_fcs[fd_,:,:,:]=fd.item()
-        s1_fcs = s1_fcs.float().to(device_id)
-        depth_pred,blur_pred = def_model(input_RGB,flag_step2=True,x2=s1_fcs)
+        depth_pred,blur_pred = def_model(input_RGB,flag_step2=True)
 
         optimizer.zero_grad()
-
-        # import matplotlib.pyplot as plt
-        # img=input_RGB[0,0,:,:].cpu().numpy()
-        # # img=np.swapaxes(img,0,2)
-        # d=depth_gt[0,:,:].cpu().numpy()
-        # b=gt_blur[0,:,:].cpu().numpy()
-
-        # # plt.figure()
-        # f, axarr = plt.subplots(3,1)
-        # axarr[0].imshow(img) 
-        # axarr[1].imshow(d) 
-        # axarr[2].imshow(b)
-        # plt.show() 
-
-
-
-
-        # pred=depth_pred.squeeze(dim=1)
-        # target=depth_gt
-        # valid_mask = (target > 0).detach()
-
-        # diff_log = torch.log(target[valid_mask]) - torch.log(pred[valid_mask])
-        # loss = torch.sqrt(torch.pow(diff_log, 2).mean() -
-        #                   0.5 * torch.pow(diff_log.mean(), 2))
 
         mask=(depth_gt>0)*(depth_gt<2).detach_()
         loss_d=criterion(depth_pred.squeeze(dim=1)[mask], depth_gt[mask])
         loss_b=criterion(blur_pred.squeeze(dim=1)[mask],gt_blur[mask])
         if(torch.isnan(loss_d) or torch.isnan(loss_b)):
-            print('nan in losses')
-            logging.info('nan in losses')
             continue
         loss=loss_d+loss_b
         total_d_loss+=loss_d.item()
@@ -203,55 +171,18 @@ for i in range(1000):
 
     #print("Elapsed time = %11.1f" %(end-start))    
     if (i+1)%evalitr==0:
-        # print('validating...')
-        # results_dict,loss_d=test.validate_dist(val_loader, def_model, criterion_d, device_id, args,min_dist=0.0,max_dist=1.0,model_name="def")
-        # print(results_dict)
-        # rmse=vali_dist()
         def_model.eval()
         rmse_total=0
         n=0
         with torch.no_grad():
-            # for batch_idx, batch in enumerate(val_loader):
-            #     input_RGB = batch['image'].to(device_id)
-            #     depth_gt = batch['depth'].to(device_id)
-            #     class_id = batch['class_id']
-            #     gt_blur = batch['blur'].to(device_id)
-
-            #     s1_fcs = torch.ones([input_RGB.shape[0],1, input_RGB.shape[2], input_RGB.shape[3]])
-            #     s1_fcs*=args.fdist
-            #     s1_fcs = s1_fcs.float().to(device_id)
-            #     depth_pred,blur_pred = def_model(input_RGB,flag_step2=True,x2=s1_fcs)
-
-            #     mask=(torch.squeeze(depth_gt)>0)*(torch.squeeze(depth_gt)<2).detach_()
-            #     #calc rmse
-            #     diff=torch.squeeze(depth_gt)-torch.psqueeze(depth_pred)
-            #     rmse=torch.sqrt(torch.mean(torch.pow(diff[mask],2))).item()
-            #     if(rmse!=rmse):
-            #         continue
-            #     rmse_total+=rmse
-            #     n+=1
-            # print("val RMSE = %2.5f" %(rmse_total/n))
-            # logging.info("val RMSE = " +str(rmse_total/n))
             results_dict,loss_d=test.validate_dist(val_loader, def_model, criterion, device_id, args,min_dist=0.0,max_dist=2.0,model_name="def")
-            # results_dict,loss_d=test.validate_dist(val_loader, def_model, criterion, device_id, args,min_dist=0.0,max_dist=1.0,model_name="def")
             print("dist : 0-2 " + str(results_dict))
             logging.info("dist : 0-2 " + str(results_dict))
-            rmse=results_dict['rmse']
-            if(i+1==evalitr):
-                best_loss=rmse
-            else:
-                if rmse<best_loss:
-                    best_loss=rmse
-                    #save model
-                    torch.save({
-                    'epoch': i + 1,
-                    'iters': i + 1,
-                    'best': best_loss,
+            torch.save({
                     'state_dict': def_model.state_dict(),
-                    'optimize':optimizer.state_dict(),
-                    },  os.path.abspath(args.resultspth)+'/model.tar')
-                    logging.info("saved model")
-                    print('model saved')
+                    },  os.path.join(os.path.abspath(args.resultspth),args.rgb_dir[10:]+'_'+args.blur_model+'.tar'))
+            logging.info("saved model")
+            print('model saved')
         def_model.train()
 
             
