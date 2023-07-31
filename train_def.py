@@ -161,7 +161,6 @@ for i in range(600):
         optimizer.zero_grad()
 
         d_mask=(depth_gt>0.0)*(depth_gt<2.0).detach_()
-        s_mask=(depth_gt>0.0).detach_()
         loss_d=criterion(depth_pred.squeeze(dim=1)[d_mask], depth_gt[d_mask])
         loss_b=criterion(blur_pred.squeeze(dim=1)[d_mask],gt_blur[d_mask])
 
