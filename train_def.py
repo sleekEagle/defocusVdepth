@@ -73,68 +73,15 @@ val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=1,
 '''
 Load models
 '''
-if args.blur_model is 'defnet':
+if args.blur_model == 'defnet':
     ch_inp_num = 3
     ch_out_num = 1
     def_model = AENet(ch_inp_num, 1, 16, flag_step2=True).to(device_id)
     model_params = def_model.parameters()
     criterion=torch.nn.MSELoss()
-
-# print('validating...')
-def vali_dist():
-    if device_id==0:
-        results_dict,loss_d=test.validate_dist(val_loader, def_model, criterion, device_id, args,min_dist=0.0,max_dist=1.0,model_name="def")
-        print("dist : 0-1 " + str(results_dict))
-        logging.info("dist : 0-1 " + str(results_dict))
-        results_dict,loss_d=test.validate_dist(val_loader, def_model, criterion, device_id, args,min_dist=1.0,max_dist=2.0,model_name="def")
-        print("dist : 1-2 " + str(results_dict))
-        logging.info("dist : 1-2 " + str(results_dict))
-
-        results_dict,loss_d=test.validate_dist(val_loader, def_model, criterion, device_id, args,min_dist=2.0,max_dist=3.0,model_name="def")
-        print("dist : 2-3 " + str(results_dict))
-        logging.info("dist : 2-3 " + str(results_dict))
-        results_dict,loss_d=test.validate_dist(val_loader, def_model, criterion, device_id, args,min_dist=3.0,max_dist=4.0,model_name="def")
-        print("dist : 3-4 " + str(results_dict))
-        logging.info("dist : 3-4 " + str(results_dict))
-        
-        results_dict,loss_d=test.validate_dist(val_loader, def_model, criterion, device_id, args,min_dist=4.0,max_dist=5.0,model_name="def")
-        print("dist : 4-5 " + str(results_dict))
-        logging.info("dist : 4-5 " + str(results_dict))
-        results_dict,loss_d=test.validate_dist(val_loader, def_model, criterion, device_id, args,min_dist=5.0,max_dist=6.0,model_name="def")
-        print("dist : 5-6 " + str(results_dict))
-        logging.info("dist : 5-6 " + str(results_dict))
-        
-        results_dict,loss_d=test.validate_dist(val_loader, def_model, criterion, device_id, args,min_dist=6.0,max_dist=8.0,model_name="def")
-        print("dist : 6-8 " + str(results_dict))
-        logging.info("dist : 6-8 " + str(results_dict))
-        results_dict,loss_d=test.validate_dist(val_loader, def_model, criterion, device_id, args,min_dist=8.0,max_dist=10.0,model_name="def")
-        print("dist : 8-10 " + str(results_dict))
-        logging.info("dist : 8-10 " + str(results_dict))
-        results_dict,loss_d=test.validate_dist(val_loader, def_model, criterion, device_id, args,min_dist=0.0,max_dist=10.0,model_name="def")
-        print("dist : 0-10 " + str(results_dict))
-        logging.info("dist : 0-10 " + str(results_dict))
-        return results_dict['rmse']
-    if device_id==1:
-        results_dict,loss_d=test.validate_dist(val_loader, def_model, criterion, device_id, args,min_dist=2.0,max_dist=3.0,model_name="def")
-        print("dist : 2-3 " + str(results_dict))
-        results_dict,loss_d=test.validate_dist(val_loader, def_model, criterion, device_id, args,min_dist=3.0,max_dist=4.0,model_name="def")
-        print("dist : 3-4 " + str(results_dict))
-
-    if device_id==2:
-        results_dict,loss_d=test.validate_dist(val_loader, def_model, criterion, device_id, args,min_dist=4.0,max_dist=5.0,model_name="def")
-        print("dist : 4-5 " + str(results_dict))
-        results_dict,loss_d=test.validate_dist(val_loader, def_model, criterion, device_id, args,min_dist=5.0,max_dist=6.0,model_name="def")
-        print("dist : 5-6 " + str(results_dict))
-
-    if device_id==3:
-        results_dict,loss_d=test.validate_dist(val_loader, def_model, criterion, device_id, args,min_dist=6.0,max_dist=8.0,model_name="def")
-        print("dist : 6-8 " + str(results_dict))
-        results_dict,loss_d=test.validate_dist(val_loader, def_model, criterion, device_id, args,min_dist=8.0,max_dist=10.0,model_name="def")
-        print("dist : 8-10 " + str(results_dict))
-
-print('lr='+str(args.max_lr))
-optimizer = optim.Adam(model_params,lr=0.0001)
-def_model.train()
+    print('lr='+str(args.max_lr))
+    optimizer = optim.Adam(model_params,lr=0.0001)
+    def_model.train()
 
 #iterate though dataset
 print('train_loader len='+str(len(train_loader)))

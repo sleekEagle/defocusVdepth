@@ -19,8 +19,7 @@ def get_blur(s1,s2):
 
 #selected_dirs: what rgb directories are being selected : a list of indices of sorted dir names
 class nyudepthv2(BaseDataset):
-    def __init__(self, data_path, rgb_dir,depth_dir,filenames_path='./dataset/filenames/',
-                 is_train=True,is_blur=False, crop_size=(448, 576), scale_size=None):
+    def __init__(self, data_path, rgb_dir,depth_dir,is_train=True,is_blur=False, crop_size=(448, 576), scale_size=None):
         super().__init__(crop_size)
 
         print('crop_size:'+str(crop_size))
