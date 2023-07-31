@@ -46,13 +46,6 @@ now = datetime.now()
 dt_string = now.strftime("%d-%m-%Y_%H_%M_%S")+'.log'
 logpath=join(args.resultspth,dt_string)
 
-# logger= logging.getLogger(__name__)
-# logger.setLevel(logging.INFO)
-# handler = logging.FileHandler(logpath, 'a', 'utf-8')
-# handler.setFormatter(logging.Formatter(": %(levelname)s:%(asctime)s | %(message)s",datefmt='%m/%d/%Y %I:%M:%S %p'))
-# logger.addHandler(handler)
-
-
 logging.basicConfig(filename=logpath,filemode='w', level=logging.INFO)
 logging.info('Starting training')
 logging.info(args)
@@ -82,6 +75,33 @@ if args.blur_model == 'defnet':
     print('lr='+str(args.max_lr))
     optimizer = optim.Adam(model_params,lr=0.0001)
     def_model.train()
+
+
+
+'''
+midas models
+'''
+layers=['conv_out']
+handles=[]
+activation={}
+def get_activation(name,bank):
+    def hook(model, input, output):
+        bank[name] = output
+    return hook
+
+model_type = "DPT_Large"
+midas = torch.hub.load("intel-isl/MiDaS", model_type)
+
+for layer in layers:
+    handles.append(midas.scratch.refinenet4.register_forward_hook(get_activation(layer,activation)))
+
+
+import torch
+img=torch.rand((1,3,384,384))
+midas(img)
+
+
+
 
 #iterate though dataset
 print('train_loader len='+str(len(train_loader)))
