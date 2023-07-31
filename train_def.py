@@ -120,7 +120,7 @@ for i in range(1000):
         rmse_total=0
         n=0
         with torch.no_grad():
-            results_dict,loss_d=test.validate_dist(val_loader, model, criterion, device_id, args,min_dist=0.0,max_dist=2.0,model_name="def")
+            results_dict,loss_d=test.validate_dist(val_loader, model, criterion, device_id, args,min_dist=0.0,max_dist=2.0,model_name=args.blur_model)
             print("dist : 0-2 " + str(results_dict))
             logging.info("dist : 0-2 " + str(results_dict))
             torch.save({

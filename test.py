@@ -275,7 +275,7 @@ def validate_dist(val_loader, model, criterion_d, device_id, args,min_dist=0.0,m
                 class_ids = torch.cat((class_ids, class_ids), dim=0)
             
             if model_name=='defnet':
-                pred_d,pred_b= model(input_RGB,flag_step2=True)
+                pred_d,pred_b= model(input_RGB)
             elif model_name=='midas':
                 pred_d=model(input_RGB)
                 pred_d=torch.unsqueeze(pred_d,dim=1)
