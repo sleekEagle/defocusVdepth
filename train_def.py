@@ -25,9 +25,6 @@ import time
 import logging
 from os.path import join
 
-from models_depth.AENET import AENet
-
-
 
 metric_name = ['d1', 'd2', 'd3', 'abs_rel', 'sq_rel', 'rmse', 'rmse_log',
                'log10', 'silog']
@@ -66,42 +63,24 @@ val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=1,
 '''
 Load models
 '''
+criterion=torch.nn.MSELoss()
+print('lr='+str(args.max_lr))
+assert args.blur_model in ['defnet','midas'],'blur model should be either defnet,midas'
+#load model
 if args.blur_model == 'defnet':
+    from models_depth.AENET import AENet
     ch_inp_num = 3
     ch_out_num = 1
-    def_model = AENet(ch_inp_num, 1, 16, flag_step2=True).to(device_id)
-    model_params = def_model.parameters()
-    criterion=torch.nn.MSELoss()
-    print('lr='+str(args.max_lr))
-    optimizer = optim.Adam(model_params,lr=0.0001)
-    def_model.train()
+    model = AENet(ch_inp_num, 1, 16, flag_step2=True).to(device_id)    
+elif args.blur_model=='midas':
+    from models_depth.midas import Midas
+    model=Midas(layers=['l4_rn'],model_type=args.midas_type)
+    model_params = model.parameters()
 
-
-
-'''
-midas models
-'''
-layers=['conv_out']
-handles=[]
-activation={}
-def get_activation(name,bank):
-    def hook(model, input, output):
-        bank[name] = output
-    return hook
-
-model_type = "DPT_Large"
-midas = torch.hub.load("intel-isl/MiDaS", model_type)
-
-for layer in layers:
-    handles.append(midas.scratch.refinenet4.register_forward_hook(get_activation(layer,activation)))
-
-
-import torch
-img=torch.rand((1,3,384,384))
-midas(img)
-
-
-
+model.to(device_id)
+model_params = model.parameters()
+optimizer = optim.Adam(model_params,lr=0.0001)
+model.train()
 
 #iterate though dataset
 print('train_loader len='+str(len(train_loader)))
@@ -117,7 +96,7 @@ for i in range(1000):
         class_id = batch['class_id']
         gt_blur = batch['blur'].to(device_id)
 
-        depth_pred,blur_pred = def_model(input_RGB,flag_step2=True)
+        depth_pred,blur_pred = model(input_RGB)
 
         optimizer.zero_grad()
 
@@ -131,26 +110,25 @@ for i in range(1000):
         total_b_loss+=loss_b.item()
         loss.backward()
         optimizer.step()
-        #print("batch idx=%2d" %(batch_idx))
     print("Epochs=%3d blur loss=%5.4f  depth loss=%5.4f" %(i,total_b_loss/len(train_loader),total_d_loss/len(train_loader)))  
     logging.info("Epochs=%3d blur loss=%5.4f  depth loss=%5.4f" , i,total_b_loss/len(train_loader),total_d_loss/len(train_loader))
     end = time.time()    
 
     #print("Elapsed time = %11.1f" %(end-start))    
     if (i+1)%evalitr==0:
-        def_model.eval()
+        model.eval()
         rmse_total=0
         n=0
         with torch.no_grad():
-            results_dict,loss_d=test.validate_dist(val_loader, def_model, criterion, device_id, args,min_dist=0.0,max_dist=2.0,model_name="def")
+            results_dict,loss_d=test.validate_dist(val_loader, model, criterion, device_id, args,min_dist=0.0,max_dist=2.0,model_name="def")
             print("dist : 0-2 " + str(results_dict))
             logging.info("dist : 0-2 " + str(results_dict))
             torch.save({
-                    'state_dict': def_model.state_dict(),
+                    'state_dict': model.state_dict(),
                     },  os.path.join(os.path.abspath(args.resultspth),args.rgb_dir[10:]+'_'+args.blur_model+'.tar'))
             logging.info("saved model")
             print('model saved')
-        def_model.train()
+        model.train()
 
             
 

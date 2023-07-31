@@ -6,7 +6,7 @@ import torch.utils.data
 # static architecture
 class AENet(nn.Module):
 
-    def __init__(self,in_dim,out_dim, num_filter, n_blocks=3, flag_step2=False):
+    def __init__(self,in_dim,out_dim, num_filter, n_blocks=3, flag_step2=True):
         super(AENet, self).__init__()
         
         self.in_dim = in_dim
@@ -88,7 +88,7 @@ class AENet(nn.Module):
         return pool
 
 
-    def forward(self, x, inp=3, k=1, flag_step2=True):
+    def forward(self, x, inp=3, k=1):
         down1 = []
         pool_temp = []
         for j in range(self.n_blocks + 1):
@@ -146,63 +146,60 @@ class AENet(nn.Module):
                         out = out_col
                     else:
                         out = torch.cat([out, out_col], dim=1)
-        if flag_step2:
-            down2 = []
-            pool_temp = []
-            for j in range(self.n_blocks + 1):
-                down_temp = []
-                for i in range(k):
-                    if j > 0:
-                        joint_pool = torch.cat([pool_temp[0], pool_max[0]], dim=1)
-                        pool_temp.pop(0)
-                    else:
-                        joint_pool = torch.cat([out[:, 1 * i:1 * (i + 1), :, :]], dim=1)
-
-                    conv = self.__getattr__('conv_down2_' + str(j + 0))(joint_pool)
-                    down_temp.append(conv)
-
-                    pool = self.__getattr__('pool2_' + str(j + 0))(conv)
-                    pool_temp.append(pool)
-
-                    pool = torch.unsqueeze(pool, 2)
-                    if i == 0:
-                        pool_all = pool
-                    else:
-                        pool_all = torch.cat([pool_all, pool], dim=2)
-                pool_max = torch.max(pool_all, dim=2)
-                down2.append(down_temp)
-
-            bridge = []
+        down2 = []
+        pool_temp = []
+        for j in range(self.n_blocks + 1):
+            down_temp = []
             for i in range(k):
-                join_pool = torch.cat([pool_temp[i], pool_max[0]], dim=1)
-                bridge.append(self.bridge2(join_pool))
+                if j > 0:
+                    joint_pool = torch.cat([pool_temp[0], pool_max[0]], dim=1)
+                    pool_temp.pop(0)
+                else:
+                    joint_pool = torch.cat([out[:, 1 * i:1 * (i + 1), :, :]], dim=1)
+
+                conv = self.__getattr__('conv_down2_' + str(j + 0))(joint_pool)
+                down_temp.append(conv)
+
+                pool = self.__getattr__('pool2_' + str(j + 0))(conv)
+                pool_temp.append(pool)
+
+                pool = torch.unsqueeze(pool, 2)
+                if i == 0:
+                    pool_all = pool
+                else:
+                    pool_all = torch.cat([pool_all, pool], dim=2)
+            pool_max = torch.max(pool_all, dim=2)
+            down2.append(down_temp)
+
+        bridge = []
+        for i in range(k):
+            join_pool = torch.cat([pool_temp[i], pool_max[0]], dim=1)
+            bridge.append(self.bridge2(join_pool))
 
 
-            up_temp = []
-            for j in range(self.n_blocks + 1):
-                for i in range(k):
-                    if j > 0:
-                        joint_unpool = torch.cat([up_temp[0], unpool_max[0], down1[self.n_blocks - j + 1][i]], dim=1)
-                        up_temp.pop(0)
-                        joint = self.__getattr__('conv_joint2_' + str(j + 0))(joint_unpool)
+        up_temp = []
+        for j in range(self.n_blocks + 1):
+            for i in range(k):
+                if j > 0:
+                    joint_unpool = torch.cat([up_temp[0], unpool_max[0], down1[self.n_blocks - j + 1][i]], dim=1)
+                    up_temp.pop(0)
+                    joint = self.__getattr__('conv_joint2_' + str(j + 0))(joint_unpool)
+                else:
+                    joint = bridge[i]
+
+                if j < self.n_blocks + 1:
+                    unpool = self.__getattr__('conv_up2_' + str(j + 1))(joint)
+                    up_temp.append(unpool)
+                    unpool = torch.unsqueeze(unpool, 2)
+
+                    if i == 0:
+                        unpool_all = unpool
                     else:
-                        joint = bridge[i]
+                        unpool_all = torch.cat([unpool_all, unpool], dim=2)
+            unpool_max = torch.max(unpool_all, dim=2)
 
-                    if j < self.n_blocks + 1:
-                        unpool = self.__getattr__('conv_up2_' + str(j + 1))(joint)
-                        up_temp.append(unpool)
-                        unpool = torch.unsqueeze(unpool, 2)
+        end2 = self.conv_end2(unpool_max[0])
+        out_step2 = self.conv_out2(end2)
 
-                        if i == 0:
-                            unpool_all = unpool
-                        else:
-                            unpool_all = torch.cat([unpool_all, unpool], dim=2)
-                unpool_max = torch.max(unpool_all, dim=2)
-
-            end2 = self.conv_end2(unpool_max[0])
-            out_step2 = self.conv_out2(end2)
-
-        if flag_step2:
-            return out_step2,out
-        else:
-            return out
+        return out_step2,out
+ 
