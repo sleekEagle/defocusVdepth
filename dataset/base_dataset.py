@@ -64,9 +64,28 @@ class BaseDataset(Dataset):
         augmented = aug(image=image, depth=depth)
         image = augmented['image']
         depth = augmented['depth']
-
+        
         image = self.to_tensor(image)
         depth = self.to_tensor(depth).squeeze()
+        self.count += 1
+
+        return image,depth
+    
+    def augment_training_data_blur(self, image, depth):
+        H, W, C = image.shape
+
+        additional_targets = {'depth': 'mask'}
+        aug = A.Compose(transforms=self.basic_transform,
+                        additional_targets=additional_targets)
+        augmented = aug(image=image, depth=depth)
+        image = augmented['image']
+        depth = augmented['depth']
+
+        totensor=transforms.ToTensor()
+        image = totensor(image)
+
+        depth = self.to_tensor(depth).squeeze()
+
         self.count += 1
 
         return image,depth

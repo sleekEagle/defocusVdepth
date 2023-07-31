@@ -114,64 +114,27 @@ class VPDDepth(nn.Module):
         channels_in = embed_dim*8
         channels_out = embed_dim
 
-        self.method=args.method
-
         if args.dataset == 'nyudepthv2':
             self.encoder = VPDDepthEncoder(out_dim=channels_in, dataset='nyu')
-            if args.freeze_encoder==1:
-                for param in self.encoder.parameters():
-                    param.requires_grad = False
         else:
             raise NotImplementedError
             
         self.decoder = Decoder(channels_in, channels_out, args)
         self.decoder.init_weights()
-        if args.freeze_decoder==1:
-            for param in self.decoder.parameters():
-                param.requires_grad = False
-        
-        if self.method==0:
-            self.last_layer_depth = nn.Sequential(
-                nn.Conv2d(channels_out, channels_out, kernel_size=3, stride=1, padding=1),
-                nn.ReLU(inplace=False),
-                nn.Conv2d(channels_out, 1, kernel_size=3, stride=1, padding=1))
 
-            for m in self.last_layer_depth.modules():
-                if isinstance(m, nn.Conv2d):
-                    normal_init(m, std=0.001, bias=0)
-        if self.method==1:
-            self.blur_layer = nn.Sequential(
-                nn.Conv2d(channels_out, channels_out, kernel_size=3, stride=1, padding=1),
-                nn.ReLU(inplace=False),
-                nn.Conv2d(channels_out, 1, kernel_size=3, stride=1, padding=1))
+        self.last_layer_depth = nn.Sequential(
+            nn.Conv2d(channels_out, channels_out, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(inplace=False),
+            nn.Conv2d(channels_out, 1, kernel_size=3, stride=1, padding=1))
 
-            self.depth_layer = nn.Sequential(
-                nn.Conv2d(1, channels_out, kernel_size=3, stride=1, padding=1),
-                nn.ReLU(inplace=False),
-                nn.Conv2d(channels_out, channels_out, kernel_size=3, stride=1, padding=1),
-        
-                nn.Conv2d(channels_out, channels_out, kernel_size=3, stride=1, padding=1),
-                nn.ReLU(inplace=False),
-                nn.Conv2d(channels_out, channels_out, kernel_size=3, stride=1, padding=1),
-
-
-                nn.Conv2d(channels_out, channels_out, kernel_size=3, stride=1, padding=1),
-                nn.ReLU(inplace=False),
-                nn.Conv2d(channels_out, channels_out, kernel_size=3, stride=1, padding=1),
-
-
-                nn.Conv2d(channels_out, channels_out, kernel_size=3, stride=1, padding=1),
-                nn.ReLU(inplace=False),
-                nn.Conv2d(channels_out, 1, kernel_size=3, stride=1, padding=1))
-
-        self.blur_n=args.blur_n
-        
+        for m in self.last_layer_depth.modules():
+            if isinstance(m, nn.Conv2d):
+                normal_init(m, std=0.001, bias=0)
 
     def forward(self, x, class_ids=None):    
         # import pdb; pdb.set_trace() 
         b, c, h, w = x.shape
         x = x*2.0 - 1.0  # normalize to [-1, 1]
-        #padding ?
         if h == 480 and w == 480:
             new_x = torch.zeros(b, c, 512, 512, device=x.device)
             new_x[:, :, 0:480, 0:480] = x
@@ -180,30 +143,22 @@ class VPDDepth(nn.Module):
             new_x = torch.zeros(b, c, 384, 384, device=x.device)
             new_x[:, :, 0:352, 0:352] = x
             x = new_x
-        #no padding ?
         elif h == 512 and w == 512:
             pass
         else:
             raise NotImplementedError
         conv_feats = self.encoder(x, class_ids)
-        #after encoder feature dims for 480x480 input : (bs,1536,16,16)
+        #output of encoder: torch.Size([4, 1536, 16, 16])
 
         if h == 480 or h == 352:
             conv_feats = conv_feats[:, :, :-1, :-1]      
-        #after cropping feature dims for 480x480 input : (bs,1536,15,15)
+
         out = self.decoder([conv_feats])
-        #after decoder feature dims for 480x480 input : (bs,192,480,480)
-        #supervise blur here
-        if self.method==0:
-            blur=torch.mean(out[:,0:self.blur_n,:,:],dim=1)
-            out_depth = self.last_layer_depth(out)
-            #after last_layer_depth feature dims for 480x480 input : (bs,1536,480,480)
-        if self.method==1:
-            blur=self.blur_layer(out)
-            out_depth=self.depth_layer(blur)
+        #output of decoder: torch.Size([4, 192, 480, 480])
+        out_depth = self.last_layer_depth(out)
         out_depth = torch.sigmoid(out_depth) * self.max_depth
 
-        return {'pred_d': out_depth,'blur':blur}
+        return {'pred_d': out_depth}
 
 
 class Decoder(nn.Module):
@@ -213,6 +168,7 @@ class Decoder(nn.Module):
         self.in_channels = in_channels
 
         # import pdb; pdb.set_trace()
+        
         self.deconv_layers = self._make_deconv_layer(
             args.num_deconv,
             args.num_filters,
@@ -296,4 +252,3 @@ class Decoder(nn.Module):
                 constant_init(m, 1)
             elif isinstance(m, nn.ConvTranspose2d):
                 normal_init(m, std=0.001)
-

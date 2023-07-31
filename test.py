@@ -16,6 +16,8 @@ from dataset.base_dataset import get_dataset
 from configs.test_options import TestOptions
 import utils
 import math
+from utils_depth.criterion import SiLogLoss
+
 
 metric_name = ['d1', 'd2', 'd3', 'abs_rel', 'sq_rel', 'rmse', 'rmse_log',
                'log10', 'silog']
@@ -252,7 +254,6 @@ def validate_dist(val_loader, model, criterion_d, device_id, args,min_dist=0.0,m
         input_RGB = batch['image'].to(device_id)
         depth_gt = batch['depth'].to(device_id)
         class_id = batch['class_id']
-        fdist=batch['fdist']
         #if(batch_idx>10): break
         with torch.no_grad():
             if args.shift_window_test:
@@ -272,15 +273,19 @@ def validate_dist(val_loader, model, criterion_d, device_id, args,min_dist=0.0,m
             if args.flip_test:
                 input_RGB = torch.cat((input_RGB, torch.flip(input_RGB, [3])), dim=0)
                 class_ids = torch.cat((class_ids, class_ids), dim=0)
-            if model_name=="def":
-                s1_fcs = torch.ones([input_RGB.shape[0],1, input_RGB.shape[2], input_RGB.shape[3]])
-                for fd_,fd in enumerate(fdist):
-                    s1_fcs[fd_,:,:,:]=fd.item()
-                s1_fcs = s1_fcs.float().to(device_id)
-                pred_d,pred_b = model(input_RGB,flag_step2=True,x2=s1_fcs)
-            else:
+            
+            if model_name=='defnet':
+                pred_d,pred_b= model(input_RGB,flag_step2=True)
+            elif model_name=='midas':
+                pred_d=model(input_RGB)
+                pred_d=torch.unsqueeze(pred_d,dim=1)
+            elif model_name=='vpd':
                 pred = model(input_RGB, class_ids=class_ids)
                 pred_d = pred['pred_d']
+            elif model_name=='combined':
+                pred_d,_=model(input_RGB,class_ids)
+            else:
+                return -1
         if args.flip_test:
             batch_s = pred_d.shape[0]//2
             pred_d = (pred_d[:batch_s] + torch.flip(pred_d[batch_s:], [3]))/2.0
@@ -345,6 +350,41 @@ def validate_dist(val_loader, model, criterion_d, device_id, args,min_dist=0.0,m
 
     loss_d = ddp_logger.meters['loss_d'].global_avg
     return result_metrics,loss_d
+
+
+criterion_d = SiLogLoss()
+def vali_dist(val_loader,model,device_id,args,logger,model_name):
+        logger.info('testingt....')
+        results_dict,loss_d=validate_dist(val_loader, model, criterion_d, device_id, args,min_dist=0.0,max_dist=1.0,model_name=model_name)
+        print("dist : 0-1 " + str(results_dict))
+        logger.info("dist : 0-1 " + str(results_dict))
+
+        results_dict,loss_d=validate_dist(val_loader, model, criterion_d, device_id, args,min_dist=1.0,max_dist=2.0,model_name=model_name)
+        print("dist : 1-2 " + str(results_dict))
+        logger.info("dist : 1-2 " + str(results_dict))
+
+        results_dict,loss_d=validate_dist(val_loader, model, criterion_d, device_id, args,min_dist=2.0,max_dist=3.0,model_name=model_name)
+        print("dist : 2-3 " + str(results_dict))
+        logger.info("dist : 2-3 " + str(results_dict))
+
+        results_dict,loss_d=validate_dist(val_loader, model, criterion_d, device_id, args,min_dist=3.0,max_dist=4.0,model_name=model_name)
+        print("dist : 3-4 " + str(results_dict))
+        logger.info("dist : 3-4 " + str(results_dict))
+
+        results_dict,loss_d=validate_dist(val_loader, model, criterion_d, device_id, args,min_dist=4.0,max_dist=5.0,model_name=model_name)
+        print("dist : 4-5 " + str(results_dict))
+        logger.info("dist : 4-5 " + str(results_dict))
+
+        results_dict,loss_d=validate_dist(val_loader, model, criterion_d, device_id, args,min_dist=5.0,max_dist=6.0,model_name=model_name)
+        print("dist : 5-6 " + str(results_dict))
+        logger.info("dist : 5-6 " + str(results_dict))
+
+        results_dict,loss_d=validate_dist(val_loader, model, criterion_d, device_id, args,min_dist=6.0,max_dist=8.0,model_name=model_name)
+        print("dist : 6-8 " + str(results_dict))
+        logger.info("dist : 6-8 " + str(results_dict))
+        results_dict,loss_d=validate_dist(val_loader, model, criterion_d, device_id, args,min_dist=8.0,max_dist=10.0,model_name=model_name)
+        print("dist : 8-10 " + str(results_dict))
+        logger.info("dist : 8-10 " + str(results_dict))
 
 # opt = TestOptions()
 # args = opt.initialize().parse_args()

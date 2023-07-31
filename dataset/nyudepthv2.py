@@ -13,33 +13,28 @@ import numpy as np
 import random
 
 #f in mm
-def get_blur(s1,s2,f):
-    blur=torch.abs(s2-s1)/s2*1/(s1-f*1e-3)
+def get_blur(s1,s2):
+    blur=torch.abs(s2-s1)/s2
     return blur
 
 #selected_dirs: what rgb directories are being selected : a list of indices of sorted dir names
 class nyudepthv2(BaseDataset):
-    def __init__(self, data_path, rgb_dir,depth_dir,filenames_path='./dataset/filenames/',selected_dirs=None,
-                 is_train=True, crop_size=(448, 576), scale_size=None):
+    def __init__(self, data_path, rgb_dir,depth_dir,filenames_path='./dataset/filenames/',
+                 is_train=True,is_blur=False, crop_size=(448, 576), scale_size=None):
         super().__init__(crop_size)
 
-
+        print('crop_size:'+str(crop_size))
         if crop_size[0] > 480:
             scale_size = (int(crop_size[0]*640/480), crop_size[0])
 
         self.scale_size = scale_size
         self.is_train = is_train
+        self.is_blur=is_blur
         self.data_path = os.path.join(data_path, 'nyu_depth_v2')
         self.rgbpath=os.path.join(self.data_path,rgb_dir)
         self.depthpath=os.path.join(self.data_path,depth_dir)
-        # rgbpath="C:\\Users\\lahir\\data\\nyu_depth_v2\\f_25\\"
-        print("selected dirs:"+str(selected_dirs))
-        self.rgbdirs=list(next(os.walk(self.rgbpath))[1])
-        if(selected_dirs and selected_dirs[0]!=-1):                
-            tmp=self.rgbdirs
-            tmp.sort()
-            newlist=[tmp[int(item)] for item in selected_dirs]
-            self.rgbdirs=newlist
+        self.fdist=float(rgb_dir.split('_')[-1])
+        print('fdist:'+str(self.fdist))
         
         #read scene names
         scene_path=os.path.join(self.data_path, 'scenes.mat')
@@ -67,23 +62,10 @@ class nyudepthv2(BaseDataset):
         return len(self.file_idx)
 
     def __getitem__(self, idx):
-        # num=int(self.filenames_list[idx].split(' ')[0].split('/')[-1].split('.')[-2].split('_')[-1])
-        # img_path = self.data_path + self.filenames_list[idx].split(' ')[0]
+
         num=self.file_idx[idx]
-        #select a directory in random
-        rgbdir=random.choice(self.rgbdirs)
-        #rgbdir='refocused_f_25_fdist_1'
-        fdist=int(rgbdir.split('_')[-1])
-        f=int(rgbdir.split('_')[2])
-        print('fdist:'+str(fdist))
-        print('rgbdir:'+str(rgbdir))
-        # print(rgbdir)
-        # print('f:'+str(f))
-        # print('fdist:'+str(fdist))
-        # gt_path = self.data_path + self.filenames_list[idx].split(' ')[1]
         gt_path=os.path.join(self.depthpath,(str(num)+".png"))
-        img_path=os.path.join(self.rgbpath,rgbdir,(str(num)+".png"))
-        # filename = img_path.split('/')[-2] + '_' + img_path.split('/')[-1]
+        img_path=os.path.join(self.rgbpath,(str(num)+".png"))
         scene_name=self.scenes[num-1][0][0][:-5]
 
         class_id = -1
@@ -102,13 +84,16 @@ class nyudepthv2(BaseDataset):
             depth = cv2.resize(depth, (self.scale_size[0], self.scale_size[1]))
         
         if self.is_train:
-            image,depth = self.augment_training_data(image, depth)
+            if self.is_blur==1:
+                image,depth = self.augment_training_data_blur(image, depth)
+            else:
+                image,depth = self.augment_training_data(image, depth)
         else:
             image,depth = self.augment_test_data(image, depth)
 
         depth = depth / 1000.0  # convert in meters
-        blur=get_blur(fdist,depth,f)
-        return {'image': image, 'depth': depth, 'blur':blur, 'class_id': class_id,'fdist':fdist}
+        blur=get_blur(self.fdist,depth)
+        return {'image': image, 'depth': depth, 'blur':blur, 'class_id': class_id}
 
 # for st_iter, sample_batch in enumerate(loader):
 #         input_RGB = sample_batch['image']
