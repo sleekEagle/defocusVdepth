@@ -148,7 +148,7 @@ for i in range(600):
         gt_blur = batch['blur'].to(device_id)
 
         if args.blur_model=='defnet':
-            depth_pred,blur_pred,selector_pred = model(input_RGB,flag_step2=True)
+            depth_pred,blur_pred = model(input_RGB,flag_step2=True)
             # torch.sum(torch.isnan(selector_pred))
         elif args.blur_model=='midas':
             # blur_pred,depth_pred,_=model(input_RGB,return_rel_depth=True)
@@ -165,26 +165,18 @@ for i in range(600):
         loss_d=criterion(depth_pred.squeeze(dim=1)[d_mask], depth_gt[d_mask])
         loss_b=criterion(blur_pred.squeeze(dim=1)[d_mask],gt_blur[d_mask])
 
-        #deal with the selector
-        selector_pred=torch.squeeze(selector_pred,dim=1)
-        gt_selection=torch.zeros_like(selector_pred)
-        gt_selection[depth_gt>2.0]=1.0
-        loss_s=criterion(gt_selection[s_mask],selector_pred[s_mask])
-
-
         if(torch.isnan(loss_d) or torch.isnan(loss_b)):
             # print('nan in losses')
             logging.info('nan in losses')
             continue
-        loss=loss_s+loss_b+loss_d
+        loss=loss_b+loss_d
         total_d_loss+=loss_d.item()
         total_b_loss+=loss_b.item()
-        total_s_loss+=loss_s.item()
         loss.backward()    
         optimizer.step()
     scheduler.step()
-    print("Epochs=%3d blur loss=%5.4f  depth loss=%5.4f selector loss=%5.4f" %(i,total_b_loss/len(train_loader),total_d_loss/len(train_loader),total_s_loss/len(train_loader)))  
-    logger.info("Epochs=%3d blur loss=%5.4f  depth loss=%5.4f selector loss=%5.4f" , i,total_b_loss/len(train_loader),total_d_loss/len(train_loader),total_s_loss/len(train_loader))
+    print("Epochs=%3d blur loss=%5.4f  depth loss=%5.4f" %(i,total_b_loss/len(train_loader),total_d_loss/len(train_loader)))  
+    logger.info("Epochs=%3d blur loss=%5.4f  depth loss=%5.4f" , i,total_b_loss/len(train_loader),total_d_loss/len(train_loader))
 
     #print("Elapsed time = %11.1f" %(end-start))    
     if (i+1)%evalitr==0:

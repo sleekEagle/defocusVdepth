@@ -20,7 +20,7 @@ from utils_depth.criterion import SiLogLoss
 
 
 metric_name = ['d1', 'd2', 'd3', 'abs_rel', 'sq_rel', 'rmse', 'rmse_log',
-               'log10', 'silog','binary_acc']
+               'log10', 'silog']
 
 def validate_single(val_loader, model, device, args,lowGPU):
     
@@ -275,7 +275,7 @@ def validate_dist(val_loader, model, criterion_d, device_id, args,min_dist=0.0,m
                 class_ids = torch.cat((class_ids, class_ids), dim=0)
             
             if model_name=='defnet':
-                pred_d,pred_b,_= model(input_RGB,flag_step2=True)
+                pred_d,pred_b= model(input_RGB,flag_step2=True)
             elif model_name=='midas':
                 pred_d=model(input_RGB)
                 pred_d=torch.unsqueeze(pred_d,dim=1)
@@ -313,8 +313,6 @@ def validate_dist(val_loader, model, criterion_d, device_id, args,min_dist=0.0,m
         #cropping_img filters out valid depth values. No zero depths after this
         pred_crop, gt_crop = metrics.cropping_img(args, pred_d, depth_gt)
         computed_result = metrics.eval_depth(pred_crop, gt_crop)
-        binary_acc=metrics.binary_eval(pred_crop,gt_crop,value=2.0)
-        computed_result['binary_acc']=binary_acc['acc']
         if math.isnan(computed_result['rmse']):
             continue
         #if rank == 0:

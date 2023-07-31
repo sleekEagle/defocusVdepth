@@ -58,14 +58,6 @@ class AENet(nn.Module):
                 nn.Conv2d(self.num_filter, self.out_dim, kernel_size=3, stride=1, padding=1),
             )
 
-            self.conv_selector = self.convblock(self.num_filter * 1, self.num_filter * 1, act_fnc)
-
-            self.conv_out2_selector = nn.Sequential(
-                nn.Conv2d(self.num_filter, self.out_dim, kernel_size=3, stride=1, padding=1),
-                nn.Sigmoid()
-            )
-
-
         
     def convsblocks(self, in_ch,out_ch,act_fn):
         block = nn.Sequential(
@@ -210,9 +202,7 @@ class AENet(nn.Module):
             end2 = self.conv_end2(unpool_max[0])
             out_step2 = self.conv_out2(end2)
 
-            end2_selector = self.conv_selector(unpool_max[0])
-            out_step2_selector = self.conv_out2_selector(end2_selector)
         if flag_step2:
-            return out_step2,out,out_step2_selector
+            return out_step2,out
         else:
             return out
