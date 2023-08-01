@@ -85,7 +85,7 @@ model.train()
 #iterate though dataset
 print('train_loader len='+str(len(train_loader)))
 logging.info('train_loader len=%s',str(len(train_loader)))
-evalitr=1
+evalitr=10
 best_loss=0
 for i in range(1000):
     total_d_loss,total_b_loss=0,0
@@ -136,3 +136,6 @@ for i in range(1000):
 
             
 
+for batch_idx, batch in enumerate(train_loader):
+    input_RGB = batch['image'].to(device_id)
+    break
