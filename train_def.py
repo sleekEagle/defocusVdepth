@@ -85,7 +85,7 @@ model.train()
 #iterate though dataset
 print('train_loader len='+str(len(train_loader)))
 logging.info('train_loader len=%s',str(len(train_loader)))
-evalitr=10
+evalitr=1
 best_loss=0
 for i in range(1000):
     total_d_loss,total_b_loss=0,0
@@ -123,9 +123,13 @@ for i in range(1000):
             results_dict,loss_d=test.validate_dist(val_loader, model, criterion, device_id, args,min_dist=0.0,max_dist=2.0,model_name=args.blur_model)
             print("dist : 0-2 " + str(results_dict))
             logging.info("dist : 0-2 " + str(results_dict))
+            model_name=args.rgb_dir[10:]+'_'+args.blur_model
+            if args.blur_model=='midas':
+                model_name+=('_'+args.midas_type)
+            model_name+='.tar'
             torch.save({
                     'state_dict': model.state_dict(),
-                    },  os.path.join(os.path.abspath(args.resultspth),args.rgb_dir[10:]+'_'+args.blur_model+'.tar'))
+                    },  os.path.join(os.path.abspath(args.resultspth),model_name))
             logging.info("saved model")
             print('model saved')
         model.train()
