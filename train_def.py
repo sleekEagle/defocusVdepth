@@ -87,7 +87,7 @@ print('train_loader len='+str(len(train_loader)))
 logging.info('train_loader len=%s',str(len(train_loader)))
 evalitr=10
 best_loss=0
-for i in range(1000):
+for i in range(800):
     total_d_loss,total_b_loss=0,0
     start = time.time()
     for batch_idx, batch in enumerate(train_loader):
