@@ -28,7 +28,7 @@ class BaseOptions():
         parser.add_argument('--exp_name',   type=str, default='')
         parser.add_argument('--gpu_or_cpu',   type=str, default='gpu')
         parser.add_argument('--data_path',    type=str, default='D:\\data\\')
-        parser.add_argument('--rgb_dir',    type=str, default='refocused_f_25_fdist_2')
+        parser.add_argument('--rgb_dir',    type=str, default='refocused_f_50_fdist_2')
         parser.add_argument('--depth_dir',    type=str, default='rawDepth')
         parser.add_argument('--blur_model',    type=str, default='defnet')
         parser.add_argument('--midas_type',    type=str, default='DPT_SwinV2_L_384')

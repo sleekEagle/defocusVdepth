@@ -238,7 +238,7 @@ def validate(val_loader, model, criterion_d, device_id, args,model_name):
     return result_metrics,loss_d
 
 #provides distance wise error
-def validate_dist(val_loader, model, criterion_d, device_id, args,min_dist=0.0,max_dist=10.0,model_name=None):
+def validate_dist(val_loader, model, criterion_d, device_id, args,min_dist=0.0,max_dist=10.0,model_name=None,lowGPU=False):
 
     if device_id == 0:
         depth_loss = logging.AverageMeter()
@@ -274,18 +274,40 @@ def validate_dist(val_loader, model, criterion_d, device_id, args,min_dist=0.0,m
                 input_RGB = torch.cat((input_RGB, torch.flip(input_RGB, [3])), dim=0)
                 class_ids = torch.cat((class_ids, class_ids), dim=0)
             
-            if model_name=='defnet':
-                pred_d,pred_b= model(input_RGB)
-            elif model_name=='midas':
-                pred_d=model(input_RGB)
-                pred_d=torch.unsqueeze(pred_d,dim=1)
-            elif model_name=='vpd':
-                pred = model(input_RGB, class_ids=class_ids)
-                pred_d = pred['pred_d']
-            elif model_name=='combined':
-                pred_d,_=model(input_RGB,class_ids)
+            #loop insted of sending through the network for lower memory GPUs (this is slower)
+            if(lowGPU):
+                num=input_RGB.shape[0]
+                predlist=torch.empty((0,1,input_RGB.shape[-2],input_RGB.shape[-1])).to(input_RGB.device)
+                for i in range(num):
+                    img=torch.unsqueeze(input_RGB[i,:,:,:],dim=0)
+                    c=torch.unsqueeze(class_ids[i],dim=0)
+                    if model_name=='defnet':
+                        pred_d,pred_b= model(img)
+                    elif model_name=='midas':
+                        pred_d=model(img)
+                        pred_d=torch.unsqueeze(pred_d,dim=1)
+                    elif model_name=='vpd':
+                        pred = model(img, class_ids=c)
+                        pred_d = pred['pred_d']
+                    elif model_name=='combined':
+                        pred_d=model(img, class_id=c)
+                    else:
+                        return -1
+                    predlist=torch.cat((predlist,pred_d),dim=0)
+                    pred_d=predlist
             else:
-                return -1
+                if model_name=='defnet':
+                    pred_d,_= model(input_RGB)
+                elif model_name=='midas':
+                    pred_d=model(input_RGB)
+                    pred_d=torch.unsqueeze(pred_d,dim=1)
+                elif model_name=='vpd':
+                    pred = model(input_RGB, class_ids=class_ids)
+                    pred_d = pred['pred_d']
+                elif model_name=='combined':
+                    pred_d,_=model(input_RGB,class_ids)
+                else:
+                    return -1
         if args.flip_test:
             batch_s = pred_d.shape[0]//2
             pred_d = (pred_d[:batch_s] + torch.flip(pred_d[batch_s:], [3]))/2.0

@@ -41,7 +41,11 @@ if not os.path.exists(args.resultspth):
     os.makedirs(args.resultspth)
 now = datetime.now()
 dt_string = now.strftime("%d-%m-%Y_%H_%M_%S")+'.log'
-logpath=join(args.resultspth,dt_string)
+logname=args.rgb_dir[10:]+'_'+args.blur_model
+if args.blur_model=='midas':
+    logname+=('_'+args.midas_type)
+logname+='.log'
+logpath=join(args.resultspth,logname)
 
 logging.basicConfig(filename=logpath,filemode='w', level=logging.INFO)
 logging.info('Starting training')
