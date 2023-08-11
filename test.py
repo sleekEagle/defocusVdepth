@@ -237,6 +237,150 @@ def validate(val_loader, model, criterion_d, device_id, args,model_name):
     loss_d = ddp_logger.meters['loss_d'].global_avg
     return result_metrics,loss_d
 
+import torch
+input_RGB=torch.rand((1,3,1080,1920))
+
+
+def validate_dist_2d(val_loader, model, criterion_d, device_id, args,min_dist=0.0,max_dist=10.0,model_name=None,lowGPU=False,crop=384):
+
+    if device_id == 0:
+        depth_loss = logging.AverageMeter()
+    model.eval()
+
+
+    ddp_logger = utils.MetricLogger()
+    result_metrics = {}
+    for metric in metric_name:
+        result_metrics[metric] = 0.0
+
+    for batch_idx, batch in enumerate(val_loader):
+        input_RGB = batch['image'].to(device_id)
+        depth_gt = batch['depth'].to(device_id)
+        class_id = batch['class_id']
+
+        with torch.no_grad():
+            if args.shift_window_test:
+                bs, _, h, w = input_RGB.shape
+                assert h>crop and w>crop and bs == 1
+                interval_all_x=w-crop
+                interval_all_y=h-crop
+                interval_x=interval_all_x//(args.shift_size-1)
+                interval_y=interval_all_y//(args.shift_size-1)
+
+                sliding_images = []
+                sliding_masks = torch.zeros((bs, 1, h, w), device=input_RGB.device)
+                class_ids = []
+                for i in range(args.shift_size):
+                    for j in range(args.shift_size):
+                        sliding_images.append(input_RGB[..., j*interval_y:j*interval_y+crop, i*interval_x:i*interval_x+crop])
+                        sliding_masks[..., :, j*interval_y:j*interval_y+crop, i*interval_x:i*interval_x+crop] += 1
+                        class_ids.append(class_id)
+                input_RGB = torch.cat(sliding_images, dim=0)
+                class_ids = torch.cat(class_ids, dim=0)
+            if args.flip_test:
+                input_RGB = torch.cat((input_RGB, torch.flip(input_RGB, [3])), dim=0)
+                class_ids = torch.cat((class_ids, class_ids), dim=0)
+            
+            #loop insted of sending through the network for lower memory GPUs (this is slower)
+            if(lowGPU):
+                num=input_RGB.shape[0]
+                predlist=torch.empty((0,1,input_RGB.shape[-2],input_RGB.shape[-1])).to(input_RGB.device)
+                for i in range(num):
+                    img=torch.unsqueeze(input_RGB[i,:,:,:],dim=0)
+                    c=torch.unsqueeze(class_ids[i],dim=0)
+                    if model_name=='defnet':
+                        pred_d,pred_b= model(img)
+                    elif model_name=='midas':
+                        pred_d=model(img)
+                        pred_d=torch.unsqueeze(pred_d,dim=1)
+                    elif model_name=='vpd':
+                        pred = model(img, class_ids=c)
+                        pred_d = pred['pred_d']
+                    elif model_name=='combined':
+                        pred_d=model(img, class_id=c)
+                    else:
+                        return -1
+                    predlist=torch.cat((predlist,pred_d),dim=0)
+                    pred_d=predlist
+            else:
+                if model_name=='defnet':
+                    pred_d,_= model(input_RGB)
+                elif model_name=='midas':
+                    pred_d=model(input_RGB)
+                    pred_d=torch.unsqueeze(pred_d,dim=1)
+                elif model_name=='vpd':
+                    pred = model(input_RGB, class_ids=class_ids)
+                    pred_d = pred['pred_d']
+                elif model_name=='combined':
+                    pred_d,_=model(input_RGB,class_ids)
+                else:
+                    return -1
+        if args.flip_test:
+            batch_s = pred_d.shape[0]//2
+            pred_d = (pred_d[:batch_s] + torch.flip(pred_d[batch_s:], [3]))/2.0
+        if args.shift_window_test:
+            pred_s = torch.zeros((bs, 1, h, w), device=pred_d.device)
+            for i in range(args.shift_size):
+                for j in range(args.shift_size):
+                    pred_s[..., :, j*interval_y:j*interval_y+crop, i*interval_x:i*interval_x+crop] += pred_d[i*j:i*j+1]
+            pred_d = pred_s/sliding_masks
+
+        pred_d = (pred_d.squeeze()).squeeze()
+        depth_gt = depth_gt.squeeze()
+
+        depth_gt[depth_gt<min_dist]=0.0
+        depth_gt[depth_gt>max_dist]=0.0
+        #if(torch.sum(depth_gt)==0.0):
+        #    print('all zero!')
+
+        loss_d = criterion_d(pred_d, depth_gt)
+
+        ddp_logger.update(loss_d=loss_d.item())
+
+        if device_id == 0:
+            depth_loss.update(loss_d.item(), input_RGB.size(0))
+
+        #cropping_img filters out valid depth values. No zero depths after this
+        pred_crop, gt_crop = metrics.cropping_img(args, pred_d, depth_gt)
+        computed_result = metrics.eval_depth(pred_crop, gt_crop)
+        if math.isnan(computed_result['rmse']):
+            continue
+        #if rank == 0:
+        #    save_path = os.path.join(result_dir, filename)
+
+        #    if save_path.split('.')[-1] == 'jpg':
+        #        save_path = save_path.replace('jpg', 'png')
+
+        #    if args.save_result:
+        #        if args.dataset == 'kitti':
+        #            pred_d_numpy = pred_d.cpu().numpy() * 256.0
+        #            cv2.imwrite(save_path, pred_d_numpy.astype(np.uint16),
+        #                        [cv2.IMWRITE_PNG_COMPRESSION, 0])
+        #        else:
+        #            pred_d_numpy = pred_d.cpu().numpy() * 1000.0
+        #            cv2.imwrite(save_path, pred_d_numpy.astype(np.uint16),
+        #                        [cv2.IMWRITE_PNG_COMPRESSION, 0])
+
+        #if rank == 0:
+        #    loss_d = depth_loss.avg
+        #    if args.pro_bar:
+        #        logging.progress_bar(batch_idx, len(val_loader), args.epochs, epoch)
+
+        ddp_logger.update(**computed_result)
+        for key in result_metrics.keys():
+            result_metrics[key] += computed_result[key]
+
+    for key in result_metrics.keys():
+        result_metrics[key] = result_metrics[key] / (batch_idx + 1)
+
+    #ddp_logger.synchronize_between_processes()
+
+    for key in result_metrics.keys():
+        result_metrics[key] = ddp_logger.meters[key].global_avg
+
+    loss_d = ddp_logger.meters['loss_d'].global_avg
+    return result_metrics,loss_d
+
 #provides distance wise error
 def validate_dist(val_loader, model, criterion_d, device_id, args,min_dist=0.0,max_dist=10.0,model_name=None,lowGPU=False):
 
@@ -254,11 +398,11 @@ def validate_dist(val_loader, model, criterion_d, device_id, args,min_dist=0.0,m
         input_RGB = batch['image'].to(device_id)
         depth_gt = batch['depth'].to(device_id)
         class_id = batch['class_id']
-        #if(batch_idx>10): break
+
         with torch.no_grad():
             if args.shift_window_test:
                 bs, _, h, w = input_RGB.shape
-                assert w > h and bs == 1
+                assert w>h and bs == 1
                 interval_all = w - h
                 interval = interval_all // (args.shift_size-1)
                 sliding_images = []
