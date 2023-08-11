@@ -237,9 +237,6 @@ def validate(val_loader, model, criterion_d, device_id, args,model_name):
     loss_d = ddp_logger.meters['loss_d'].global_avg
     return result_metrics,loss_d
 
-import torch
-input_RGB=torch.rand((1,3,1080,1920))
-
 
 def validate_dist_2d(val_loader, model, criterion_d, device_id, args,min_dist=0.0,max_dist=10.0,model_name=None,lowGPU=False,crop=384):
 
