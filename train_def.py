@@ -124,7 +124,7 @@ for i in range(800):
         rmse_total=0
         n=0
         with torch.no_grad():
-            results_dict,loss_d=test.validate_dist(val_loader, model, criterion, device_id, args,min_dist=0.0,max_dist=2.0,model_name=args.blur_model)
+            results_dict,loss_d=test.validate_dist_2d(val_loader, model, criterion, device_id, args,min_dist=0.0,max_dist=2.0,model_name=args.blur_model)
             print("dist : 0-2 " + str(results_dict))
             logging.info("dist : 0-2 " + str(results_dict))
             model_name=args.rgb_dir[10:]+'_'+args.blur_model
@@ -139,7 +139,3 @@ for i in range(800):
         model.train()
 
             
-
-for batch_idx, batch in enumerate(train_loader):
-    input_RGB = batch['image'].to(device_id)
-    break
