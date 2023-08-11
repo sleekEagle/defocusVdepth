@@ -395,7 +395,6 @@ def validate_dist(val_loader, model, criterion_d, device_id, args,min_dist=0.0,m
         input_RGB = batch['image'].to(device_id)
         depth_gt = batch['depth'].to(device_id)
         class_id = batch['class_id']
-
         with torch.no_grad():
             if args.shift_window_test:
                 bs, _, h, w = input_RGB.shape
