@@ -91,9 +91,11 @@ print('train_loader len='+str(len(train_loader)))
 logging.info('train_loader len=%s',str(len(train_loader)))
 evalitr=10
 best_loss=0
+virtual_bs=args.virtual_batch_size
 for i in range(800):
     total_d_loss,total_b_loss=0,0
     start = time.time()
+    optimizer.zero_grad()
     for batch_idx, batch in enumerate(train_loader):
         input_RGB = batch['image'].to(device_id)
         depth_gt = batch['depth'].to(device_id)
@@ -101,8 +103,6 @@ for i in range(800):
         gt_blur = batch['blur'].to(device_id)
 
         depth_pred,blur_pred = model(input_RGB)
-
-        optimizer.zero_grad()
 
         mask=(depth_gt>0)*(depth_gt<2).detach_()
         loss_d=criterion(depth_pred.squeeze(dim=1)[mask], depth_gt[mask])
@@ -113,7 +113,10 @@ for i in range(800):
         total_d_loss+=loss_d.item()
         total_b_loss+=loss_b.item()
         loss.backward()
-        optimizer.step()
+        if((batch_idx+1)%virtual_bs==0):
+            optimizer.step()
+            optimizer.zero_grad()
+
     print("Epochs=%3d blur loss=%5.4f  depth loss=%5.4f" %(i,total_b_loss/len(train_loader),total_d_loss/len(train_loader)))  
     logging.info("Epochs=%3d blur loss=%5.4f  depth loss=%5.4f" , i,total_b_loss/len(train_loader),total_d_loss/len(train_loader))
     end = time.time()    
