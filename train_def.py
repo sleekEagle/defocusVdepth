@@ -133,6 +133,7 @@ for i in range(800):
             model_name=args.rgb_dir[10:]+'_'+args.blur_model
             if args.blur_model=='midas':
                 model_name+=('_'+args.midas_type)
+            model_name+=('_bs_'+str(args.virtual_batch_size*args.batch_size))
             model_name+='.tar'
             torch.save({
                     'state_dict': model.state_dict(),
