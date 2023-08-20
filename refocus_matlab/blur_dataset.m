@@ -23,19 +23,18 @@ function [] = blur_dataset()
     %path_rgb = ['C:\Users\lahir\kinect_hand_data\extracted\lahiru1\cropped\rgb\'];
     %path_depth = ['C:\Users\lahir\kinect_hand_data\extracted\lahiru1\cropped\depth\'];
 
-    path_rgb = ["C:\Users\lahir\data\nyu_depth_v2\official_splits\rgb\"];
-    path_depth = ["C:\Users\lahir\data\nyu_depth_v2\official_splits\filledDepth\"];
-
-    dest_path_rgb = ["C:\Users\lahir\data\nyu_depth_v2\refocused\1\"];
-
+    path_rgb = ["C:\Users\lahir\data\calibration\kinect_blur\kinect\blur_calib\rgb\"];
+    path_depth = ["C:\Users\lahir\data\matlabtest\depth\"];
+    dest_path_rgb = ["C:\Users\lahir\data\matlabtest\"];
+    
     for j=1:length(path_rgb)
         source_rgb=path_rgb(j);
         source_depth=path_depth(j);
-
         dest_rgb=dest_path_rgb(j);
 
         create_dir(dest_rgb);
-
+        
+        
         contents_rgb = dir(source_rgb);
         contents_depth = dir(source_depth);
 
@@ -46,6 +45,7 @@ function [] = blur_dataset()
                 s=clock;
             end
             disp(contents_rgb(i+2).name)
+            
             % read images
             im=double(imread(source_rgb+contents_rgb(i+2).name));
             %if depth data is in .exr format
@@ -53,13 +53,15 @@ function [] = blur_dataset()
             %if depth data is in .png format
             disp(contents_depth(i+2).name)
             depth=(imread(source_depth+contents_depth(i+2).name));
+            
             %depth=depth(:,:,1);
             
             %conversion into depth values in meters
             depth=double(depth)/(1000.0);
     
             [im_refoc, ~, ~, D]=refoc_image(im,depth,step_depth,focus,f,N,px,mode_);
-            fname_str=contents_rgb(i+2).name;
+            %fname_str=contents_rgb(i+2).name;
+            fname_str=strcat('f_',string(f),'.jpg');
             %[m,n]=size(fname_str);
             %snum=str2num(fname_str(1:n-4));
             %fname=num2str(snum,'%06.f')+"_01rgb.png";

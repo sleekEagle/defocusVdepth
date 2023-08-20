@@ -14,7 +14,7 @@ Phi=f/N;
 rho=0.3;
 
 % window size for gaussian blur generation
-n=21;
+n=200;
 
 D=min(depth(:))-0.5:step_depth:max(depth(:))+0.5;
 % initialisation
@@ -48,8 +48,7 @@ for k=1:length(D)-1
     temp=zeros(size(im,1),size(im,2));
     pp=(depth<D(k+1)&depth>=D(k));
     temp(depth<D(k+1)&depth>=D(k))=1;
-    Ad(:,:,k)=imdilate(temp,se);
-     
+    Ad(:,:,k)=imdilate(temp,se);    
     
 end
 
@@ -60,6 +59,7 @@ end
 for m=1:size(im,3)
     
     A1L1= imdilate(Ak(:,:,1),se).*im(:,:,m);
+    
     im_refoc=conv2(A1L1,PSF{1},'same');
     Mk=ones(size(im,1),size(im,2));
     
