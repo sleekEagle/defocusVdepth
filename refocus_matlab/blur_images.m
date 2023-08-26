@@ -9,6 +9,7 @@ depth_step=0.005;
 rgb_dir='C:\Users\lahir\data\calibration\kinect_blur\kinect2\kinect\cameras\f_50\rgb\'
 depth_dir='C:\Users\lahir\data\calibration\kinect_blur\kinect2\kinect\cameras\f_50\depth\'
 out_dir='C:\Users\lahir\data\calibration\kinect_blur\kinect2\kinect\cameras\f_50\refocused\'
+create_dir(out_dir)
 rgb_files=dir(rgb_dir);
 depth_files=dir(depth_dir);
 
@@ -54,5 +55,13 @@ for i=3:(length(rgb_files))
         refocused=refocused+refocused_;
     end
     imwrite(uint8(refocused),out_path);
+end
+
+function [] = create_dir(dir_path)
+    if(exist(dir_path)~=7)
+        mkdir(dir_path)
+    else
+        display([dir_path  'already exists'])
+    end
 end
 
