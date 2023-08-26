@@ -1,15 +1,17 @@
 {
     "nyudepthv2": {
-        "data_path":"D:\\data",
-        "rgb_dir":"rgb_f_0_fdist_0",
+        "data_path":"/p/blurdepth/data/",
+        "rgb_dir":"refocused_f_25_fdist_2/",
         "depth_dir":"rawDepth",
         "dataset":"nyudepthv2",
-        "batch_size":"1",
-        "virtual_batch_size":"12",
-        "workers":"1",
+        "batch_size":1,
+        "virtual_batch_size":12,
+        "workers":1,
         "garg_crop":0,
         "eigen_crop":1,
-        "use_amp":0
+        "use_amp":0,
+        "min_depth":1e-3,
+        "max_depth":10
     }
 
 }

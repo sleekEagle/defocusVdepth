@@ -70,12 +70,12 @@ class Trainer(BaseTrainer):
 
             l_si, pred = self.silog_loss(
                 pred_depths, depths_gt, mask=mask, interpolate=True, return_interpolated=True)
-            loss = self.config.w_si * l_si
+            loss = self.config.zoe.train.w_si * l_si
             losses[self.silog_loss.name] = l_si
 
-            if self.config.w_grad > 0:
+            if self.config.zoe.train.w_grad > 0:
                 l_grad = self.grad_loss(pred, depths_gt, mask=mask)
-                loss = loss + self.config.w_grad * l_grad
+                loss = loss + self.config.zoe.train.w_grad * l_grad
                 losses[self.grad_loss.name] = l_grad
             else:
                 l_grad = torch.Tensor([0])
@@ -94,11 +94,11 @@ class Trainer(BaseTrainer):
             depths_gt[torch.logical_not(mask)] = -99
             
             print('accessing config...****************')
-            print(self.config[dataset]['min_depth'])
+            print(self.config['min_depth'])
             print('*********************************')
 
             self.log_images(rgb={"Input": images[0, ...]}, depth={"GT": depths_gt[0], "PredictedMono": pred[0]}, prefix="Train",
-                            min_depth=self.config[dataset]['min_depth'], max_depth=self.config[dataset]['max_depth'])
+                            min_depth=self.config['min_depth'], max_depth=self.config['max_depth'])
 
             if self.config.get("log_rel", False):
                 self.log_images(
@@ -178,6 +178,6 @@ class Trainer(BaseTrainer):
         if val_step == 1 and self.should_log:
             depths_gt[torch.logical_not(mask)] = -99
             self.log_images(rgb={"Input": images[0]}, depth={"GT": depths_gt[0], "PredictedMono": pred_depths[0]}, prefix="Test",
-                            min_depth=DATASETS_CONFIG[dataset]['min_depth'], max_depth=DATASETS_CONFIG[dataset]['max_depth'])
+                            min_depth=self.config.min_depth, max_depth=self.config.max_depth)
 
         return metrics, losses

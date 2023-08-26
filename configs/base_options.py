@@ -65,16 +65,16 @@ class BaseOptions():
         parser.add_argument('--gpu_or_cpu',   type=str, default='gpu')
 
         #dataset configs
-        parser.add_argument('--data_path',    type=str, default='D:\\data')
-        parser.add_argument('--rgb_dir',    type=str, default='rgb_f_0_fdist_0')
-        parser.add_argument('--depth_dir',    type=str, default='rawDepth')
-        parser.add_argument('--dataset',      type=str, default='nyudepthv2',
+        parser.add_argument('--data_path',    type=str, default=None)
+        parser.add_argument('--rgb_dir',    type=str,default=None)
+        parser.add_argument('--depth_dir',    type=str,default=None)
+        parser.add_argument('--dataset',      type=str,default='nyudepthv2',
                             choices=['nyudepthv2', 'kitti', 'imagepath'])
-        parser.add_argument('--batch_size',   type=int, default=8)
-        parser.add_argument('--virtual_batch_size',   type=int, default=12)
-        parser.add_argument('--workers',      type=int, default=1)
-        parser.add_argument('--garg_crop',    type=bool, default=False)
-        parser.add_argument('--eigen_crop',    type=bool, default=True)
+        parser.add_argument('--batch_size',   type=int, default=None)
+        parser.add_argument('--virtual_batch_size',   type=int, default=None)
+        parser.add_argument('--workers',      type=int, default=None)
+        parser.add_argument('--garg_crop',    type=bool, default=None)
+        parser.add_argument('--eigen_crop',    type=bool, default=None)
 
         #model configs
         parser.add_argument('--blur_model',    type=str, default='defnet')
@@ -128,7 +128,7 @@ class BaseOptions():
         conf.update(conf_model)
         conf.update(conf_data)
         #replace conf with options from args if there are matches
-        conf.update(args)
+        conf.update((k,v) for k,v in args.items() if v is not None)
         return edict(conf)
     
 

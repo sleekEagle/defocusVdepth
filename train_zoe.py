@@ -1,5 +1,4 @@
 import torch
-import test
 from configs.train_options import TrainOptions
 from dataset.base_dataset import get_dataset
 from tqdm import tqdm
@@ -91,7 +90,6 @@ device_id=0
 opt = TrainOptions()
 conf=opt.get_arg_dict()
 
-
 try:
     node_str = os.environ['SLURM_JOB_NODELIST'].replace(
         '[', '').replace(']', '')
@@ -114,7 +112,7 @@ if conf.distributed:
     conf.dist_url = 'tcp://{}:{}'.format(nodes[0], port)
     print(conf.dist_url)
     conf.dist_backend = 'nccl'
-    conf.gpu = None
+    conf.train_gpu = None
 
 ngpus_per_node = torch.cuda.device_count()
 conf.num_workers = conf.workers
@@ -128,8 +126,8 @@ if conf.distributed:
                  args=(ngpus_per_node, conf))
 else:
     if ngpus_per_node == 1:
-        conf.gpu = 0
-    main_worker(conf.gpu, ngpus_per_node, conf)
+        conf.train_gpu = 0
+    main_worker(conf.train_gpu, ngpus_per_node, conf)
 
 
 
