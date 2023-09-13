@@ -113,7 +113,7 @@ for i in range(800):
         if args.is_blur:
             loss_b=criterion(blur_pred.squeeze(dim=1)[mask],gt_blur[mask])
             if torch.isnan(loss_b): continue
-            total_b_loss+=loss_b.item()\
+            total_b_loss+=loss_b.item()
      
         loss=loss_d+loss_b
         
