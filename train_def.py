@@ -109,13 +109,14 @@ for i in range(800):
         if args.is_depth:
             loss_d=criterion(depth_pred.squeeze(dim=1)[mask], depth_gt[mask])
             if torch.isnan(loss_d): continue
+            total_d_loss+=loss_d.item()
         if args.is_blur:
             loss_b=criterion(blur_pred.squeeze(dim=1)[mask],gt_blur[mask])
             if torch.isnan(loss_b): continue
+            total_b_loss+=loss_b.item()\
      
         loss=loss_d+loss_b
-        total_d_loss+=loss_d.item()
-        total_b_loss+=loss_b.item()
+        
         loss.backward()
         if((batch_idx+1)%virtual_bs==0):
             optimizer.step()
