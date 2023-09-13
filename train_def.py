@@ -108,10 +108,11 @@ for i in range(800):
         loss_d,loss_b=0,0
         if args.is_depth:
             loss_d=criterion(depth_pred.squeeze(dim=1)[mask], depth_gt[mask])
+            if torch.isnan(loss_d): continue
         if args.is_blur:
             loss_b=criterion(blur_pred.squeeze(dim=1)[mask],gt_blur[mask])
-        if(torch.isnan(loss_d) or torch.isnan(loss_b)):
-            continue
+            if torch.isnan(loss_b): continue
+     
         loss=loss_d+loss_b
         total_d_loss+=loss_d.item()
         total_b_loss+=loss_b.item()
