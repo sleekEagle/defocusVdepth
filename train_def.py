@@ -105,8 +105,11 @@ for i in range(800):
         depth_pred,blur_pred = model(input_RGB)
 
         mask=(depth_gt>0)*(depth_gt<2).detach_()
-        loss_d=criterion(depth_pred.squeeze(dim=1)[mask], depth_gt[mask])
-        loss_b=criterion(blur_pred.squeeze(dim=1)[mask],gt_blur[mask])
+        loss_d,loss_b=0,0
+        if args.is_depth:
+            loss_d=criterion(depth_pred.squeeze(dim=1)[mask], depth_gt[mask])
+        if args.is_blur:
+            loss_b=criterion(blur_pred.squeeze(dim=1)[mask],gt_blur[mask])
         if(torch.isnan(loss_d) or torch.isnan(loss_b)):
             continue
         loss=loss_d+loss_b
