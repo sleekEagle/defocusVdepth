@@ -25,9 +25,6 @@ import time
 import logging
 from os.path import join
 
-from models_depth.AENET import AENet
-
-
 
 metric_name = ['d1', 'd2', 'd3', 'abs_rel', 'sq_rel', 'rmse', 'rmse_log',
                'log10', 'silog']
@@ -44,14 +41,11 @@ if not os.path.exists(args.resultspth):
     os.makedirs(args.resultspth)
 now = datetime.now()
 dt_string = now.strftime("%d-%m-%Y_%H_%M_%S")+'.log'
-logpath=join(args.resultspth,dt_string)
-
-# logger= logging.getLogger(__name__)
-# logger.setLevel(logging.INFO)
-# handler = logging.FileHandler(logpath, 'a', 'utf-8')
-# handler.setFormatter(logging.Formatter(": %(levelname)s:%(asctime)s | %(message)s",datefmt='%m/%d/%Y %I:%M:%S %p'))
-# logger.addHandler(handler)
-
+logname=args.rgb_dir[10:]+'_'+args.blur_model
+if args.blur_model=='midas':
+    logname+=('_'+args.midas_type)
+logname+='.log'
+logpath=join(args.resultspth,logname)
 
 logging.basicConfig(filename=logpath,filemode='w', level=logging.INFO)
 logging.info('Starting training')
@@ -73,64 +67,84 @@ val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=1,
 '''
 Load models
 '''
+criterion=torch.nn.MSELoss()
+print('lr='+str(args.max_lr))
+assert args.blur_model in ['defnet','midas'],'blur model should be either defnet,midas'
+#load model
 if args.blur_model == 'defnet':
+    from models_depth.AENET import AENet
     ch_inp_num = 3
     ch_out_num = 1
-    def_model = AENet(ch_inp_num, 1, 16, flag_step2=True).to(device_id)
-    model_params = def_model.parameters()
-    criterion=torch.nn.MSELoss()
-    print('lr='+str(args.max_lr))
-    optimizer = optim.Adam(model_params,lr=0.0001)
-    def_model.train()
+    model = AENet(ch_inp_num, 1, 16, flag_step2=True).to(device_id)    
+elif args.blur_model=='midas':
+    from models_depth.midas import Midas
+    model=Midas(layers=['l4_rn'],model_type=args.midas_type)
+    model_params = model.parameters()
+
+model.to(device_id)
+model_params = model.parameters()
+optimizer = optim.Adam(model_params,lr=0.0001)
+model.train()
 
 #iterate though dataset
 print('train_loader len='+str(len(train_loader)))
 logging.info('train_loader len=%s',str(len(train_loader)))
 evalitr=10
 best_loss=0
-for i in range(1000):
+virtual_bs=args.virtual_batch_size
+for i in range(800):
     total_d_loss,total_b_loss=0,0
     start = time.time()
+    optimizer.zero_grad()
     for batch_idx, batch in enumerate(train_loader):
         input_RGB = batch['image'].to(device_id)
         depth_gt = batch['depth'].to(device_id)
         class_id = batch['class_id']
         gt_blur = batch['blur'].to(device_id)
 
-        depth_pred,blur_pred = def_model(input_RGB,flag_step2=True)
-
-        optimizer.zero_grad()
+        depth_pred,blur_pred = model(input_RGB)
 
         mask=(depth_gt>0)*(depth_gt<2).detach_()
-        loss_d=criterion(depth_pred.squeeze(dim=1)[mask], depth_gt[mask])
-        loss_b=criterion(blur_pred.squeeze(dim=1)[mask],gt_blur[mask])
-        if(torch.isnan(loss_d) or torch.isnan(loss_b)):
-            continue
+        loss_d,loss_b=0,0
+        if args.is_depth:
+            loss_d=criterion(depth_pred.squeeze(dim=1)[mask], depth_gt[mask])
+            if torch.isnan(loss_d): continue
+            total_d_loss+=loss_d.item()
+        if args.is_blur:
+            loss_b=criterion(blur_pred.squeeze(dim=1)[mask],gt_blur[mask])
+            if torch.isnan(loss_b): continue
+            total_b_loss+=loss_b.item()
+     
         loss=loss_d+loss_b
-        total_d_loss+=loss_d.item()
-        total_b_loss+=loss_b.item()
+        
         loss.backward()
-        optimizer.step()
-        #print("batch idx=%2d" %(batch_idx))
+        if((batch_idx+1)%virtual_bs==0):
+            optimizer.step()
+            optimizer.zero_grad()
+
     print("Epochs=%3d blur loss=%5.4f  depth loss=%5.4f" %(i,total_b_loss/len(train_loader),total_d_loss/len(train_loader)))  
     logging.info("Epochs=%3d blur loss=%5.4f  depth loss=%5.4f" , i,total_b_loss/len(train_loader),total_d_loss/len(train_loader))
     end = time.time()    
 
     #print("Elapsed time = %11.1f" %(end-start))    
     if (i+1)%evalitr==0:
-        def_model.eval()
+        model.eval()
         rmse_total=0
         n=0
         with torch.no_grad():
-            results_dict,loss_d=test.validate_dist(val_loader, def_model, criterion, device_id, args,min_dist=0.0,max_dist=2.0,model_name="defnet")
+            results_dict,loss_d=test.validate_dist_2d(val_loader, model, criterion, device_id, args,min_dist=0.0,max_dist=2.0,model_name=args.blur_model)
             print("dist : 0-2 " + str(results_dict))
             logging.info("dist : 0-2 " + str(results_dict))
+            model_name=args.rgb_dir[10:]+'_'+args.blur_model
+            if args.blur_model=='midas':
+                model_name+=('_'+args.midas_type)
+            model_name+=('_bs_'+str(args.virtual_batch_size*args.batch_size))
+            model_name+='.tar'
             torch.save({
-                    'state_dict': def_model.state_dict(),
-                    },  os.path.join(os.path.abspath(args.resultspth),args.rgb_dir[10:]+'_'+args.blur_model+'.tar'))
+                    'state_dict': model.state_dict(),
+                    },  os.path.join(os.path.abspath(args.resultspth),model_name))
             logging.info("saved model")
             print('model saved')
-        def_model.train()
+        model.train()
 
             
-

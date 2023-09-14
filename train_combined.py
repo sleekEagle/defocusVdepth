@@ -68,14 +68,6 @@ val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=1,
                                          num_workers=0,pin_memory=True)
 
 '''
-import AENET used for defocus blur based depth prediction
-'''
-def get_activation(name, bank):
-    def hook(model, input, output):
-        bank[name] = output
-    return hook
-
-'''
 ************
 load blur model
 ************
@@ -127,6 +119,8 @@ if args.geometry_model=='vpd':
 
 criterion=torch.nn.MSELoss()
 
+selector=Selector(blur_model=blur_model,geometry_model=geometry_model)
+
 '''
 Evauate the models
 '''
@@ -141,29 +135,6 @@ Evauate the models
 # logger.info("geo model error dist : 2-10 " + str(results_dict))
 
 
-'''
-make combined model
-'''
-selectorNet=Selector(blur_model,freezeblur=False).to(device_id)
-'''
-Load weight from file if given
-'''
-if args.resume_selector_from:
-    # loading weights of the first step
-    print('loading selector_conv weights from :'+args.resume_selector_from)
-    logging.info("loading selector_conv weights from : "+str(args.resume_selector_from))
-    pretrained_dict = torch.load(args.resume_selector_from)
-    selectorNet.conv_selector.load_state_dict(pretrained_dict['state_dict'])
-
-
-model_params = selectorNet.parameters()
-optimizer = optim.Adam(model_params,lr=0.0001)
-selectorNet.train()
-selectorNet.blur_model.train()
-
-
-# for p in selectorNet.blur_model.parameters():
-#     print(p.requires_grad)
 
 evalitr=10
 
@@ -176,6 +147,9 @@ evalitr=10
 # print("dist : 2-10 " + str(results_dict))
 # logger.info("dist : 2-10 " + str(results_dict))
 
+#evaluate the selector model
+results_dict=test.validate_dist(val_loader, selector, criterion, device_id, args,min_dist=0.0,max_dist=2.0,model_name="combined",lowGPU=True)
+
 for i in range(600):
     total_d_loss=0
     for batch_idx, batch in enumerate(train_loader):
@@ -184,9 +158,20 @@ for i in range(600):
         class_id = batch['class_id']
         gt_blur = batch['blur'].to(device_id)
 
-        selector_pred=selectorNet(input_RGB,class_id)
-        selector_pred=torch.squeeze(selector_pred,dim=1)
-        optimizer.zero_grad()
+        selector(input_RGB,class_id)
+
+        with torch.no_grad():
+            #predict depth with the geometry model
+            pred_geo = geometry_model(input_RGB, class_ids=class_id)
+            pred_geo=pred_geo['pred_d']
+            #predict with the blur model
+            pred_blur,_=blur_model(input_RGB)
+
+        to_blur_model=pred_geo<2.0
+        pred_geo[to_blur_model]=0.
+        pred_blur[~to_blur_model]=0.
+        comb_pred=pred_geo+pred_blur
+
         mask=(depth_gt>0.0).detach_()
         gt_selection=torch.zeros_like(selector_pred)
         gt_selection[depth_gt>2.0]=1.0
