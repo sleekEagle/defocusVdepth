@@ -23,6 +23,9 @@ from torch import inf
 
 from tensorboardX import SummaryWriter
 
+import matplotlib.pyplot as plt
+
+
 class SmoothedValue(object):
     """Track a series of values and provide access to smoothed values over a
     window or the global series average.
@@ -524,3 +527,33 @@ def auto_load_model(args, model, model_without_ddp, optimizer, loss_scaler, mode
             if 'scaler' in checkpoint:
                 loss_scaler.load_state_dict(checkpoint['scaler'])
             print("With optim & sched!")
+
+
+'''
+plot a single or multiple images
+'''
+def get_plottable_tensor(t):
+    t=torch.squeeze(t)
+    dim=t.dim()
+    if dim==3:
+        if t.shape[0]==3:
+            t=torch.permute(t,(1,2,0))
+    t=t.detach().cpu().numpy()
+    return t
+
+
+def show_torch_image(t):
+    t=get_plottable_tensor(t)
+    plt.imshow(t)
+    plt.show()
+
+def show_torch_images_jux(t1,t2):
+    t1=get_plottable_tensor(t1)
+    t2=get_plottable_tensor(t2)
+
+    f=plt.figure()
+    f.add_subplot(1,2, 1)
+    plt.imshow(t1)
+    f.add_subplot(1,2, 2)
+    plt.imshow(t2)
+    plt.show(block=True)

@@ -1,14 +1,10 @@
-import os
-import cv2
 import numpy as np
-from datetime import datetime
-
 import torch
-import torch.optim as optim
+import torch.nn
 import torch.backends.cudnn as cudnn
 import sys
 sys.path.append('stable-diffusion')
-from models_depth.model import VPDDepth
+from models.model import VPDDepth
 import utils_depth.metrics as metrics
 import utils_depth.logging as logging
 
@@ -238,7 +234,7 @@ def validate(val_loader, model, criterion_d, device_id, args,model_name):
     return result_metrics,loss_d
 
 
-def validate_dist_2d(val_loader, model, criterion_d, device_id, args,min_dist=0.0,max_dist=10.0,model_name=None,lowGPU=False,crop=384):
+def validate_dist_2d(val_loader, model, criterion_d, device_id, args,min_dist=0.0,max_dist=10.0,model_name=None,lowGPU=False,crop=256):
 
     if device_id == 0:
         depth_loss = logging.AverageMeter()
@@ -251,6 +247,8 @@ def validate_dist_2d(val_loader, model, criterion_d, device_id, args,min_dist=0.
         result_metrics[metric] = 0.0
 
     for batch_idx, batch in enumerate(val_loader):
+        # if batch_idx%10==0:
+        #     print(str(round(batch_idx/len(val_loader),2))+' done.')
         input_RGB = batch['image'].to(device_id)
         depth_gt = batch['depth'].to(device_id)
         class_id = batch['class_id']
@@ -302,6 +300,8 @@ def validate_dist_2d(val_loader, model, criterion_d, device_id, args,min_dist=0.
             else:
                 if model_name=='defnet':
                     pred_d,_= model(input_RGB)
+                elif model_name=='zoe':
+                    pred_d=model.infer(input_RGB)
                 elif model_name=='midas':
                     pred_d=model(input_RGB)
                     pred_d=torch.unsqueeze(pred_d,dim=1)
@@ -547,6 +547,132 @@ def vali_dist(val_loader,model,device_id,args,logger,model_name):
         results_dict,loss_d=validate_dist(val_loader, model, criterion_d, device_id, args,min_dist=8.0,max_dist=10.0,model_name=model_name)
         print("dist : 8-10 " + str(results_dict))
         logger.info("dist : 8-10 " + str(results_dict))
+
+
+'''
+Evaluating Zoedepth model
+'''
+class RunningAverage:
+    def __init__(self):
+        self.avg = 0
+        self.count = 0
+
+    def append(self, value):
+        self.avg = (value + self.count * self.avg) / (self.count + 1)
+        self.count += 1
+
+    def get_value(self):
+        return self.avg
+
+class RunningAverageDict:
+    """A dictionary of running averages."""
+    def __init__(self):
+        self._dict = None
+
+    def update(self, new_dict):
+        if new_dict is None:
+            return
+
+        if self._dict is None:
+            self._dict = dict()
+            for key, value in new_dict.items():
+                self._dict[key] = RunningAverage()
+
+        for key, value in new_dict.items():
+            self._dict[key].append(value)
+
+    def get_value(self):
+        if self._dict is None:
+            return None
+        return {key: value.get_value() for key, value in self._dict.items()}
+
+def compute_errors(gt, pred):
+    """Compute metrics for 'pred' compared to 'gt'
+
+    Args:
+        gt (numpy.ndarray): Ground truth values
+        pred (numpy.ndarray): Predicted values
+
+        gt.shape should be equal to pred.shape
+
+    Returns:
+        dict: Dictionary containing the following metrics:
+            'a1': Delta1 accuracy: Fraction of pixels that are within a scale factor of 1.25
+            'a2': Delta2 accuracy: Fraction of pixels that are within a scale factor of 1.25^2
+            'a3': Delta3 accuracy: Fraction of pixels that are within a scale factor of 1.25^3
+            'abs_rel': Absolute relative error
+            'rmse': Root mean squared error
+            'log_10': Absolute log10 error
+            'sq_rel': Squared relative error
+            'rmse_log': Root mean squared error on the log scale
+            'silog': Scale invariant log error
+    """
+    thresh = np.maximum((gt / pred), (pred / gt))
+    a1 = (thresh < 1.25).mean()
+    a2 = (thresh < 1.25 ** 2).mean()
+    a3 = (thresh < 1.25 ** 3).mean()
+
+    abs_rel = np.mean(np.abs(gt - pred) / gt)
+    sq_rel = np.mean(((gt - pred) ** 2) / gt)
+
+    rmse = (gt - pred) ** 2
+    rmse = np.sqrt(rmse.mean())
+
+    rmse_log = (np.log(gt) - np.log(pred)) ** 2
+    rmse_log = np.sqrt(rmse_log.mean())
+
+    err = np.log(pred) - np.log(gt)
+    silog = np.sqrt(np.mean(err ** 2) - np.mean(err) ** 2) * 100
+
+    log_10 = (np.abs(np.log10(gt) - np.log10(pred))).mean()
+    return dict(a1=a1, a2=a2, a3=a3, abs_rel=abs_rel, rmse=rmse, log_10=log_10, rmse_log=rmse_log,
+                silog=silog, sq_rel=sq_rel)
+
+    
+def compute_metrics(gt, pred, interpolate=True, garg_crop=False, eigen_crop=True, dataset='nyu', min_depth_eval=0.1, max_depth_eval=10, **kwargs):
+    """Compute metrics of predicted depth maps. Applies cropping and masking as necessary or specified via arguments. Refer to compute_errors for more details on metrics.
+    """
+    if 'config' in kwargs:
+        config = kwargs['config']
+        garg_crop = config.garg_crop
+        eigen_crop = config.eigen_crop
+        min_depth_eval = config.min_depth_eval
+        max_depth_eval = config.max_depth_eval
+
+    if gt.shape[-2:] != pred.shape[-2:] and interpolate:
+        pred = nn.functional.interpolate(
+            pred, gt.shape[-2:], mode='bilinear', align_corners=True)
+
+    pred = pred.squeeze().cpu().numpy()
+    pred[pred < min_depth_eval] = min_depth_eval
+    pred[pred > max_depth_eval] = max_depth_eval
+    pred[np.isinf(pred)] = max_depth_eval
+    pred[np.isnan(pred)] = min_depth_eval
+
+    gt_depth = gt.squeeze().cpu().numpy()
+    valid_mask = np.logical_and(
+        gt_depth > min_depth_eval, gt_depth < max_depth_eval)
+
+    if garg_crop or eigen_crop:
+        gt_height, gt_width = gt_depth.shape
+        eval_mask = np.zeros(valid_mask.shape)
+
+        if garg_crop:
+            eval_mask[int(0.40810811 * gt_height):int(0.99189189 * gt_height),
+                      int(0.03594771 * gt_width):int(0.96405229 * gt_width)] = 1
+
+        elif eigen_crop:
+            # print("-"*10, " EIGEN CROP ", "-"*10)
+            if dataset == 'kitti':
+                eval_mask[int(0.3324324 * gt_height):int(0.91351351 * gt_height),
+                          int(0.0359477 * gt_width):int(0.96405229 * gt_width)] = 1
+            else:
+                # assert gt_depth.shape == (480, 640), "Error: Eigen crop is currently only valid for (480, 640) images"
+                eval_mask[45:471, 41:601] = 1
+        else:
+            eval_mask = np.ones(valid_mask.shape)
+    valid_mask = np.logical_and(valid_mask, eval_mask)
+    return compute_errors(gt_depth[valid_mask], pred[valid_mask])
 
 # opt = TestOptions()
 # args = opt.initialize().parse_args()

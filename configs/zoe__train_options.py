@@ -7,6 +7,7 @@
 from configs.base_options import BaseOptions
 import argparse
 
+
 def str2bool(v):
     if isinstance(v, bool):
         return v
@@ -16,8 +17,9 @@ def str2bool(v):
         return False
     else:
         raise argparse.ArgumentTypeError('Boolean value expected.')
-    
-class TrainOptions(BaseOptions):
+
+
+class ZoeTrainOptions(BaseOptions):
     def initialize(self):
         parser = BaseOptions.initialize(self)
 
@@ -37,7 +39,7 @@ class TrainOptions(BaseOptions):
 
         # logging options
         parser.add_argument('--val_freq', type=int, default=1)
-        parser.add_argument('-`-pro_bar', type=str2bool, default='False')
+        parser.add_argument('--pro_bar', type=str2bool, default='False')
         parser.add_argument('--save_freq', type=int, default=1)
         parser.add_argument('--print_freq', type=int, default=100)
         parser.add_argument('--save_model', action='store_true')     
@@ -49,8 +51,4 @@ class TrainOptions(BaseOptions):
         parser.add_argument('--freeze_encoder',  type=int, default=1)
         parser.add_argument('--freeze_decoder',  type=int, default=1)
         return parser
-
-# opt = TrainOptions()
-# config=opt.get_arg_dict()
-# print(config)
-
+    

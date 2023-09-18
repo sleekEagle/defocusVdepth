@@ -25,9 +25,8 @@
 import json
 import os
 
-from zoedepth.utils.easydict import EasyDict as edict
-
-from zoedepth.utils.arg_utils import infer_type
+from models_depth.zoedepth.utils.easydict import EasyDict as edict
+from models_depth.zoedepth.utils.arg_utils import infer_type
 import pathlib
 import platform
 
@@ -378,7 +377,7 @@ def get_config(model_name, mode='train', dataset=None, **overwrite_kwargs):
         check_choices("Dataset", dataset, ["nyu", "kitti", "mix", None])
 
     config = flatten({**COMMON_CONFIG, **COMMON_TRAINING_CONFIG})
-    config = update_model_config(config, mode, model_name)
+    config = update_model_config(config, mode, model_name)    
 
     # update with model version specific config
     version_name = overwrite_kwargs.get("version_name", config["version_name"])

@@ -1,0 +1,14 @@
+{
+    "nyudepthv2": {
+        "data_path":"D:\\data",
+        "rgb_dir":"rgb_f_0_fdist_0",
+        "depth_dir":"rawDepth",
+        "dataset":"nyudepthv2",
+        "batch_size":"1",
+        "virtual_batch_size":"12",
+        "workers":"1",
+        "garg_crop":0,
+        "eigen_crop":1
+    }
+
+}

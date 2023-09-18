@@ -16,7 +16,7 @@ class TestOptions(BaseOptions):
         parser.add_argument('--result_dir', type=str, default='./results',
                             help='save result images into result_dir/exp_name')
         parser.add_argument('--crop_h',  type=int, default=480)
-        parser.add_argument('--crop_w',  type=int, default=480)       
+        parser.add_argument('--crop_w',  type=int, default=640)       
 
         parser.add_argument('--save_eval_pngs', action='store_true',
                             help='save result image into evaluation form')
