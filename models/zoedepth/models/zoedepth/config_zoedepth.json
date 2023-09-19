@@ -22,7 +22,8 @@
         
         "train": {
             "train_midas": true,
-            "use_pretrained_midas": true,
+            "use_pretrained_midas": false,
+            "pretrained_resource" : "url::https://github.com/isl-org/ZoeDepth/releases/download/v1.0/ZoeD_M12_N.pt",
             "trainer": "zoedepth",
             "epochs": 5,
             "bs": 16,

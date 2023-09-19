@@ -37,8 +37,8 @@ import torch.optim as optim
 import wandb
 from tqdm import tqdm
 
-from zoedepth.utils.config import flatten
-from zoedepth.utils.misc import RunningAverageDict, colorize, colors
+from models.zoedepth.utils.config import flatten
+from models.zoedepth.utils.misc import RunningAverageDict, colorize, colors
 
 
 def is_rank_zero(args):
@@ -95,7 +95,7 @@ class BaseTrainer:
     def init_optimizer(self):
         m = self.model.module if self.config.multigpu else self.model
 
-        if self.config.same_lr:
+        if self.config.zoe.train.same_lr:
             print("Using same LR")
             if hasattr(m, 'core'):
                 m.core.unfreeze()
@@ -106,15 +106,15 @@ class BaseTrainer:
                 raise NotImplementedError(
                     f"Model {m.__class__.__name__} does not implement get_lr_params. Please implement it or use the same LR for all parameters.")
 
-            params = m.get_lr_params(self.config.lr)
+            params = m.get_lr_params(self.config.zoe.train.optim_kwargs.lr)
 
-        return optim.AdamW(params, lr=self.config.lr, weight_decay=self.config.wd)
+        return optim.AdamW(params, lr=self.config.zoe.train.optim_kwargs.lr, weight_decay=self.config.zoe.train.optim_kwargs.wd)
 
     def init_scheduler(self):
         lrs = [l['lr'] for l in self.optimizer.param_groups]
-        return optim.lr_scheduler.OneCycleLR(self.optimizer, lrs, epochs=self.config.epochs, steps_per_epoch=len(self.train_loader),
-                                             cycle_momentum=self.config.cycle_momentum,
-                                             base_momentum=0.85, max_momentum=0.95, div_factor=self.config.div_factor, final_div_factor=self.config.final_div_factor, pct_start=self.config.pct_start, three_phase=self.config.three_phase)
+        return optim.lr_scheduler.OneCycleLR(self.optimizer, lrs, epochs=self.config.zoe.train.epochs, steps_per_epoch=len(self.train_loader),
+                                             cycle_momentum=self.config.zoe.train.sched_kwargs.cycle_momentum,
+                                             base_momentum=0.85, max_momentum=0.95, div_factor=self.config.zoe.train.sched_kwargs.div_factor, final_div_factor=self.config.zoe.train.sched_kwargs.final_div_factor, pct_start=self.config.zoe.train.sched_kwargs.pct_start, three_phase=self.config.zoe.train.sched_kwargs.three_phase)
 
     def train_on_batch(self, batch, train_step):
         raise NotImplementedError
@@ -140,12 +140,12 @@ class BaseTrainer:
             return True
 
     def train(self):
-        print(f"Training {self.config.name}")
+        print(f"Training {self.config.zoe.model.name}")
         if self.config.uid is None:
             self.config.uid = str(uuid.uuid4()).split('-')[-1]
         run_id = f"{dt.now().strftime('%d-%h_%H-%M')}-{self.config.uid}"
         self.config.run_id = run_id
-        self.config.experiment_id = f"{self.config.name}{self.config.version_name}_{run_id}"
+        self.config.experiment_id = f"{self.config.zoe.model.name}{self.config.zoe.model.version_name}_{run_id}"
         self.should_write = ((not self.config.distributed)
                              or self.config.rank == 0)
         self.should_log = self.should_write  # and logging
@@ -153,7 +153,7 @@ class BaseTrainer:
             tags = self.config.tags.split(
                 ',') if self.config.tags != '' else None
             wandb.init(project=self.config.project, name=self.config.experiment_id, config=flatten(self.config), dir=self.config.root,
-                       tags=tags, notes=self.config.notes, settings=wandb.Settings(start_method="fork"))
+                       tags=tags, notes=self.config.notes, settings=wandb.Settings(start_method="thread"))
 
         self.model.train()
         self.step = 0

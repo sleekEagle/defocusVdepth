@@ -92,7 +92,8 @@ class nyudepthv2(BaseDataset):
 
         depth = depth / 1000.0  # convert in meters
         blur=get_blur(self.fdist,depth)
-        return {'image': image, 'depth': depth, 'blur':blur, 'class_id': class_id}
+        mask=depth>0
+        return {'image': image, 'depth': depth, 'blur':blur, 'class_id': class_id,'dataset':'nyudepthv2','mask':mask}
 
 # for st_iter, sample_batch in enumerate(loader):
 #         input_RGB = sample_batch['image']

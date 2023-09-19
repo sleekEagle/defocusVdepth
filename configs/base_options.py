@@ -82,7 +82,15 @@ class BaseOptions():
         parser.add_argument('--image_model',    type=str, default='zoedepth')
 
         parser.add_argument('--resultspth',    type=str, default='D:\\data\\model\\')
-        
+        parser.add_argument('--uid',type=int, default=0)
+        parser.add_argument('--tags',type=str, default='')
+        parser.add_argument('--project',type=str, default='zoedepth')
+        parser.add_argument('--root',type=str, default='.')
+        parser.add_argument('--notes',type=str, default='')
+        parser.add_argument('--validate_every',type=float, default=0.25)
+        parser.add_argument('--log_images_every',type=float, default=0.1)
+        parser.add_argument('--prefetch',type=bool, default=False)
+
         # depth configs
         parser.add_argument('--max_depth',      type=float, default=10.0)
         parser.add_argument('--max_depth_eval', type=float, default=10.0)

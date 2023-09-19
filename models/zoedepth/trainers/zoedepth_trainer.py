@@ -26,15 +26,17 @@ import torch
 import torch.cuda.amp as amp
 import torch.nn as nn
 
-from zoedepth.trainers.loss import GradL1Loss, SILogLoss
-from zoedepth.utils.config import DATASETS_CONFIG
-from zoedepth.utils.misc import compute_metrics
-from zoedepth.data.preprocess import get_black_border
+from models.zoedepth.trainers.loss import GradL1Loss, SILogLoss
+from models.zoedepth.utils.config import DATASETS_CONFIG
+from models.zoedepth.utils.misc import compute_metrics
+from models.zoedepth.data.preprocess import get_black_border
 
 from .base_trainer import BaseTrainer
 from torchvision import transforms
 from PIL import Image
 import numpy as np
+
+#read dataset config from config file
 
 class Trainer(BaseTrainer):
     def __init__(self, config, model, train_loader, test_loader=None, device=None):
@@ -60,8 +62,8 @@ class Trainer(BaseTrainer):
         mask = batch["mask"].to(self.device).to(torch.bool)
 
         losses = {}
-
-        with amp.autocast(enabled=self.config.use_amp):
+        en=False if self.config.use_amp==0 else True
+        with amp.autocast(enabled=en):
 
             output = self.model(images)
             pred_depths = output['metric_depth']
@@ -90,9 +92,13 @@ class Trainer(BaseTrainer):
         if self.should_log and (self.step % int(self.config.log_images_every * self.iters_per_epoch)) == 0:
             # -99 is treated as invalid depth in the log_images function and is colored grey.
             depths_gt[torch.logical_not(mask)] = -99
+            
+            print('accessing config...****************')
+            print(self.config[dataset]['min_depth'])
+            print('*********************************')
 
             self.log_images(rgb={"Input": images[0, ...]}, depth={"GT": depths_gt[0], "PredictedMono": pred[0]}, prefix="Train",
-                            min_depth=DATASETS_CONFIG[dataset]['min_depth'], max_depth=DATASETS_CONFIG[dataset]['max_depth'])
+                            min_depth=self.config[dataset]['min_depth'], max_depth=self.config[dataset]['max_depth'])
 
             if self.config.get("log_rel", False):
                 self.log_images(
