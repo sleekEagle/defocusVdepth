@@ -30,7 +30,7 @@ class TrainOptions(BaseOptions):
         parser.add_argument('--max_train_dist',          type=float, default=2.0)
         parser.add_argument('--is_blur',type=int,default=1)
         parser.add_argument('--is_depth',type=int,default=1)
-        parser.add_argument('--distributed',type=int,   default=0)
+        parser.add_argument('--distributed',type=bool,   default=False)
         
         parser.add_argument('--crop_h',  type=int, default=480)
         parser.add_argument('--crop_w',  type=int, default=640)        
