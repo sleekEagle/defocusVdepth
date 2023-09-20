@@ -62,8 +62,8 @@ class Trainer(BaseTrainer):
         mask = batch["mask"].to(self.device).to(torch.bool)
 
         losses = {}
-        en=False if self.config.use_amp==0 else True
-        with amp.autocast(enabled=en):
+
+        with amp.autocast(enabled=self.config.use_amp):
 
             output = self.model(images)
             pred_depths = output['metric_depth']
@@ -111,7 +111,8 @@ class Trainer(BaseTrainer):
     
     @torch.no_grad()
     def eval_infer(self, x):
-        with amp.autocast(enabled=self.config.use_amp):
+        en=False if self.config.use_amp==0 else 1
+        with amp.autocast(enabled=en):
             m = self.model.module if self.config.multigpu else self.model
             pred_depths = m(x)['metric_depth']
         return pred_depths

@@ -7,9 +7,9 @@
         "batch_size":1,
         "virtual_batch_size":12,
         "workers":1,
-        "garg_crop":0,
-        "eigen_crop":1,
-        "use_amp":0,
+        "garg_crop":false,
+        "eigen_crop":true,
+        "use_amp":false,
         "min_depth":1e-3,
         "max_depth":10
     }

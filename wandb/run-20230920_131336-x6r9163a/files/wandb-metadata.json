@@ -1,0 +1,120 @@
+{
+    "os": "Linux-5.15.0-83-generic-x86_64-with-glibc2.17",
+    "python": "3.8.16",
+    "heartbeatAt": "2023-09-20T17:13:37.354580",
+    "startedAt": "2023-09-20T17:13:36.716165",
+    "docker": null,
+    "cuda": null,
+    "args": [],
+    "state": "running",
+    "program": "tmp.py",
+    "codePathLocal": "tmp.py",
+    "codePath": "tmp.py",
+    "git": {
+        "remote": "https://github.com/sleekEagle/defocusVdepth.git",
+        "commit": "b3e745ab7c8557377ea976b6b04de82066ac70c1"
+    },
+    "email": "lahirunuwanisme@gmail.com",
+    "root": "/u/lnw8px/code/defocusVdepth",
+    "host": "portal01",
+    "username": "lnw8px",
+    "executable": "/u/lnw8px/.conda/envs/mmedit/bin/python",
+    "cpu_count": 8,
+    "cpu_count_logical": 16,
+    "cpu_freq": {
+        "current": 1711.9838125,
+        "min": 1200.0,
+        "max": 3000.0
+    },
+    "cpu_freq_per_core": [
+        {
+            "current": 2000.0,
+            "min": 1200.0,
+            "max": 3000.0
+        },
+        {
+            "current": 1200.0,
+            "min": 1200.0,
+            "max": 3000.0
+        },
+        {
+            "current": 1200.0,
+            "min": 1200.0,
+            "max": 3000.0
+        },
+        {
+            "current": 1200.0,
+            "min": 1200.0,
+            "max": 3000.0
+        },
+        {
+            "current": 1200.0,
+            "min": 1200.0,
+            "max": 3000.0
+        },
+        {
+            "current": 2100.0,
+            "min": 1200.0,
+            "max": 3000.0
+        },
+        {
+            "current": 2000.0,
+            "min": 1200.0,
+            "max": 3000.0
+        },
+        {
+            "current": 1200.0,
+            "min": 1200.0,
+            "max": 3000.0
+        },
+        {
+            "current": 1300.0,
+            "min": 1200.0,
+            "max": 3000.0
+        },
+        {
+            "current": 2297.261,
+            "min": 1200.0,
+            "max": 3000.0
+        },
+        {
+            "current": 2297.22,
+            "min": 1200.0,
+            "max": 3000.0
+        },
+        {
+            "current": 1900.0,
+            "min": 1200.0,
+            "max": 3000.0
+        },
+        {
+            "current": 1900.0,
+            "min": 1200.0,
+            "max": 3000.0
+        },
+        {
+            "current": 1200.0,
+            "min": 1200.0,
+            "max": 3000.0
+        },
+        {
+            "current": 2100.0,
+            "min": 1200.0,
+            "max": 3000.0
+        },
+        {
+            "current": 2297.26,
+            "min": 1200.0,
+            "max": 3000.0
+        }
+    ],
+    "disk": {
+        "/": {
+            "total": 913.7821273803711,
+            "used": 86.38452529907227
+        }
+    },
+    "memory": {
+        "total": 133.35374450683594
+    }
+}

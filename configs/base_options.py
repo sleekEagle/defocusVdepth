@@ -81,7 +81,7 @@ class BaseOptions():
         parser.add_argument('--midas_type',    type=str, default='DPT_BEiT_L_384')
         parser.add_argument('--image_model',    type=str, default='zoedepth')
 
-        parser.add_argument('--resultspth',    type=str, default='D:\\data\\model\\')
+        parser.add_argument('--save_dir',    type=str, default='/p/blurdepth/results/defvdep/')
         parser.add_argument('--uid',type=int, default=0)
         parser.add_argument('--tags',type=str, default='')
         parser.add_argument('--project',type=str, default='zoedepth')
