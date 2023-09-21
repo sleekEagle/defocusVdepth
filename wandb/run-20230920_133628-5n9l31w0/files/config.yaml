@@ -1,0 +1,404 @@
+wandb_version: 1
+
+name:
+  desc: null
+  value: ZoeDepth
+version_name:
+  desc: null
+  value: v1
+n_bins:
+  desc: null
+  value: 64
+bin_embedding_dim:
+  desc: null
+  value: 128
+bin_centers_type:
+  desc: null
+  value: softplus
+n_attractors:
+  desc: null
+  value:
+  - 16
+  - 8
+  - 4
+  - 1
+attractor_alpha:
+  desc: null
+  value: 1000
+attractor_gamma:
+  desc: null
+  value: 2
+attractor_kind:
+  desc: null
+  value: mean
+attractor_type:
+  desc: null
+  value: inv
+midas_model_type:
+  desc: null
+  value: DPT_BEiT_L_384
+min_temp:
+  desc: null
+  value: 0.0212
+max_temp:
+  desc: null
+  value: 50.0
+output_distribution:
+  desc: null
+  value: logbinomial
+memory_efficient:
+  desc: null
+  value: true
+inverse_midas:
+  desc: null
+  value: false
+img_size:
+  desc: null
+  value:
+  - 384
+  - 512
+train_midas:
+  desc: null
+  value: false
+use_pretrained_midas:
+  desc: null
+  value: false
+pretrained_resource:
+  desc: null
+  value: url::https://github.com/isl-org/ZoeDepth/releases/download/v1.0/ZoeD_M12_N.pt
+trainer:
+  desc: null
+  value: zoedepth
+epochs:
+  desc: null
+  value: 25
+bs:
+  desc: null
+  value: 16
+lr:
+  desc: null
+  value: 0.000161
+wd:
+  desc: null
+  value: 0.01
+div_factor:
+  desc: null
+  value: 1
+final_div_factor:
+  desc: null
+  value: 10000
+pct_start:
+  desc: null
+  value: 0.7
+three_phase:
+  desc: null
+  value: false
+cycle_momentum:
+  desc: null
+  value: true
+same_lr:
+  desc: null
+  value: false
+w_si:
+  desc: null
+  value: 1
+w_domain:
+  desc: null
+  value: 0.2
+w_reg:
+  desc: null
+  value: 0
+w_grad:
+  desc: null
+  value: 0
+avoid_boundary:
+  desc: null
+  value: false
+random_crop:
+  desc: null
+  value: false
+input_width:
+  desc: null
+  value: 640
+input_height:
+  desc: null
+  value: 480
+midas_lr_factor:
+  desc: null
+  value: 1
+encoder_lr_factor:
+  desc: null
+  value: 10
+pos_enc_lr_factor:
+  desc: null
+  value: 10
+freeze_midas_bn:
+  desc: null
+  value: true
+force_keep_ar:
+  desc: null
+  value: true
+data_path:
+  desc: null
+  value: /p/blurdepth/data/
+rgb_dir:
+  desc: null
+  value: refocused_f_25_fdist_2/
+depth_dir:
+  desc: null
+  value: rawDepth
+dataset:
+  desc: null
+  value: nyudepthv2
+batch_size:
+  desc: null
+  value: 1
+virtual_batch_size:
+  desc: null
+  value: 12
+workers:
+  desc: null
+  value: 1
+garg_crop:
+  desc: null
+  value: false
+eigen_crop:
+  desc: null
+  value: true
+use_amp:
+  desc: null
+  value: false
+min_depth:
+  desc: null
+  value: 0.001
+max_depth:
+  desc: null
+  value: 10.0
+exp_name:
+  desc: null
+  value: ''
+gpu_or_cpu:
+  desc: null
+  value: gpu
+blur_model:
+  desc: null
+  value: defnet
+midas_type:
+  desc: null
+  value: DPT_BEiT_L_384
+image_model:
+  desc: null
+  value: zoedepth
+save_dir:
+  desc: null
+  value: /p/blurdepth/results/defvdep/
+uid:
+  desc: null
+  value: 0
+tags:
+  desc: null
+  value: ''
+project:
+  desc: null
+  value: zoedepth
+root:
+  desc: null
+  value: .
+notes:
+  desc: null
+  value: ''
+validate_every:
+  desc: null
+  value: 0.25
+log_images_every:
+  desc: null
+  value: 0.1
+prefetch:
+  desc: null
+  value: false
+max_depth_eval:
+  desc: null
+  value: 10.0
+min_depth_eval:
+  desc: null
+  value: 0.001
+do_kb_crop:
+  desc: null
+  value: 1
+blur_n:
+  desc: null
+  value: 20
+method:
+  desc: null
+  value: 0
+pretrained:
+  desc: null
+  value: ''
+drop_path_rate:
+  desc: null
+  value: 0.3
+use_checkpoint:
+  desc: null
+  value: false
+num_deconv:
+  desc: null
+  value: 3
+num_filters:
+  desc: null
+  value:
+  - 32
+  - 32
+  - 32
+deconv_kernels:
+  desc: null
+  value:
+  - 2
+  - 2
+  - 2
+shift_window_test:
+  desc: null
+  value: false
+shift_size:
+  desc: null
+  value: 2
+flip_test:
+  desc: null
+  value: false
+max_lr:
+  desc: null
+  value: 0.0001
+min_lr:
+  desc: null
+  value: 0.0001
+weight_decay:
+  desc: null
+  value: 0.05
+layer_decay:
+  desc: null
+  value: 0.9
+max_train_dist:
+  desc: null
+  value: 2.0
+is_blur:
+  desc: null
+  value: 1
+is_depth:
+  desc: null
+  value: 1
+distributed:
+  desc: null
+  value: false
+clip_grad:
+  desc: null
+  value: 0.1
+print_losses:
+  desc: null
+  value: false
+crop_h:
+  desc: null
+  value: 480
+crop_w:
+  desc: null
+  value: 640
+train_gpu:
+  desc: null
+  value: 0
+log_dir:
+  desc: null
+  value: ./logs
+val_freq:
+  desc: null
+  value: 1
+'`_pro_bar':
+  desc: null
+  value: false
+save_freq:
+  desc: null
+  value: 1
+print_freq:
+  desc: null
+  value: 100
+save_model:
+  desc: null
+  value: false
+resume_geometry_from:
+  desc: null
+  value: C:\Users\lahir\Documents\vpd_depth_480x480.pth
+resume_blur_from:
+  desc: null
+  value: C:\Users\lahir\Documents\f_50_fdist_2.tar
+auto_resume:
+  desc: null
+  value: false
+save_result:
+  desc: null
+  value: false
+freeze_encoder:
+  desc: null
+  value: 1
+freeze_decoder:
+  desc: null
+  value: 1
+world_size:
+  desc: null
+  value: 1
+rank:
+  desc: null
+  value: 0
+num_workers:
+  desc: null
+  value: 1
+ngpus_per_node:
+  desc: null
+  value: 4
+gpu:
+  desc: null
+  value: 0
+multigpu:
+  desc: null
+  value: false
+total_params:
+  desc: null
+  value: 344.82M
+run_id:
+  desc: null
+  value: 20-Sep_13-36-0
+experiment_id:
+  desc: null
+  value: ZoeDepthv1_20-Sep_13-36-0
+_wandb:
+  desc: null
+  value:
+    python_version: 3.8.16
+    cli_version: 0.15.10
+    framework: torch
+    is_jupyter_run: false
+    is_kaggle_kernel: false
+    start_time: 1695231388.514189
+    t:
+      1:
+      - 1
+      - 5
+      - 41
+      - 49
+      - 53
+      - 55
+      - 63
+      - 80
+      2:
+      - 1
+      - 5
+      - 41
+      - 49
+      - 53
+      - 55
+      - 63
+      - 80
+      3:
+      - 13
+      - 16
+      - 23
+      4: 3.8.16
+      5: 0.15.10
+      8:
+      - 8
