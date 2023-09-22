@@ -8,3 +8,4 @@ ckpt/
 *.err
 *.out
 *.sh
+wandb/*
