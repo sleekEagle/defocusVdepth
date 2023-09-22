@@ -1,12 +1,13 @@
 import torch
 import test
-from configs.test_options import TestOptions
 from dataset.base_dataset import get_dataset
 from tqdm import tqdm
+from omegaconf import DictConfig, OmegaConf
+import hydra
 
-device_id=0
-opt = TestOptions()
-conf=opt.get_arg_dict()
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+torch.hub.help("intel-isl/MiDaS", "DPT_BEiT_L_384", force_reload=False)  # Triggers fresh download of MiDaS repo
+from models.zoedepth.models.builder import build_model
 
 @torch.no_grad()
 def infer(model,images):
@@ -17,7 +18,7 @@ def infer(model,images):
     return mean_pred
 
 @torch.no_grad()
-def evaluate(model,val_loader,round_vals=True, round_precision=3):
+def evaluate(model,val_loader,round_vals=True, round_precision=3,conf=None):
     model.eval()
     metrics = test.RunningAverageDict()
 
@@ -35,22 +36,27 @@ def evaluate(model,val_loader,round_vals=True, round_precision=3):
     metrics = {k: r(v) for k, v in metrics.get_value().items()}
     return metrics
 
-DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-torch.hub.help("intel-isl/MiDaS", "DPT_BEiT_L_384", force_reload=True)  # Triggers fresh download of MiDaS repo
-from models.zoedepth.models.builder import build_model
-zoe = build_model(conf,'infer')
-zoe=zoe.to(DEVICE)
+@hydra.main(version_base=None, config_path="configs", config_name="config_local")
+def run_eval(conf : DictConfig):
+    print(OmegaConf.to_yaml(conf))
+    zoe = build_model(conf,'infer')
+    zoe=zoe.to(DEVICE)
 
-# Dataset setting
-dataset_kwargs = {'dataset_name': conf.dataset, 'data_path': conf.data_path,'rgb_dir':conf.rgb_dir, 'depth_dir':conf.depth_dir}
-dataset_kwargs['crop_size'] = (conf.crop_h, conf.crop_w)
+    # Dataset setting
+    dataset_kwargs = {'dataset_name': conf.datasets.nyudepthv2.dataset, 'data_path': conf.datasets.nyudepthv2.data_path,'rgb_dir':conf.datasets.nyudepthv2.rgb_dir, 'depth_dir':conf.datasets.nyudepthv2.depth_dir}
+    dataset_kwargs['crop_size'] = (conf.models[conf.common.train.image_model].train.input_height, conf.models[conf.common.train.image_model].train.input_width)
 
-val_dataset = get_dataset(**dataset_kwargs, is_train=False)
-val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=1,
-                                         num_workers=0,pin_memory=True)
+    val_dataset = get_dataset(**dataset_kwargs, is_train=False)
+    val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=1,
+                                            num_workers=0,pin_memory=True)
 
-metrics=evaluate(zoe,val_loader)
-print("metrics",metrics)
+    metrics=evaluate(zoe,val_loader,conf=conf)
+    print("metrics",metrics)
+
+
+
+if __name__ == "__main__":
+    run_eval()
 
 # # From URL
 # from models_depth.zoedepth.utils.misc import get_image_from_url

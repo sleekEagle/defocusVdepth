@@ -18,6 +18,9 @@ common:
         epochs: 5
         batch_size: 1
         multigpu: false
+    eval:
+        min_depth: 0.1
+        max_depth: 10.0
 
 
 datasets:

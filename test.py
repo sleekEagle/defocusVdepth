@@ -9,7 +9,6 @@ import utils_depth.metrics as metrics
 import utils_depth.logging as logging
 
 from dataset.base_dataset import get_dataset
-from configs.test_options import TestOptions
 import utils
 import math
 from utils_depth.criterion import SiLogLoss
@@ -634,10 +633,10 @@ def compute_metrics(gt, pred, interpolate=True, garg_crop=False, eigen_crop=True
     """
     if 'config' in kwargs:
         config = kwargs['config']
-        garg_crop = config.garg_crop
-        eigen_crop = config.eigen_crop
-        min_depth_eval = config.min_depth_eval
-        max_depth_eval = config.max_depth_eval
+        garg_crop = config.datasets.nyudepthv2.garg_crop
+        eigen_crop = config.datasets.nyudepthv2.eigen_crop
+        min_depth_eval = config.common.eval.min_depth
+        max_depth_eval = config.common.eval.max_depth
 
     if gt.shape[-2:] != pred.shape[-2:] and interpolate:
         pred = nn.functional.interpolate(

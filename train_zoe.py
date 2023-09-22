@@ -83,7 +83,7 @@ def main_worker(gpu, ngpus_per_node, conf):
 #                                          num_workers=0,pin_memory=True)
 
 @hydra.main(version_base=None, config_path="configs", config_name="config_local")
-def run(conf : DictConfig):
+def run_train(conf : DictConfig):
     OmegaConf.set_struct(conf, True)
     with open_dict(conf):
         try:
@@ -121,7 +121,8 @@ def run(conf : DictConfig):
             OmegaConf.set_struct(conf, False)
             main_worker(conf.train_gpu, ngpus_per_node, conf)
 
-run()
+if __name__ == "__main__":
+    run_train()
 
 # seed = conf.seed if 'seed' in conf and conf.seed else 43
 # fix_random_seed(seed)
