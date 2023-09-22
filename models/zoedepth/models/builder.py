@@ -40,7 +40,7 @@ def build_model(config,mode) -> DepthModel:
     Returns:
         torch.nn.Module: Model corresponding to name and version as specified in config
     """
-    module_name = f"zoedepth.models.{config.image_model}"
+    module_name = f"zoedepth.models.{config.common.train.image_model}"
     print('module:'+str(module_name))
     try:
         module = import_module(module_name)
@@ -54,5 +54,5 @@ def build_model(config,mode) -> DepthModel:
     except AttributeError as e:
         raise ValueError(
             f"Model {config.image_model} has no get_version function.") from e
-    print(get_version(config.zoe.model.version_name))
-    return get_version(config.zoe.model.version_name).build_from_config(config.zoe[mode])
+    print(get_version(config.models.zoedepth.model.version_name))
+    return get_version(config.models.zoedepth.model.version_name).build_from_config(config.models.zoedepth)

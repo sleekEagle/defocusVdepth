@@ -1,17 +1,19 @@
 import torch
-from configs.train_options import TrainOptions
 from dataset.base_dataset import get_dataset
 from tqdm import tqdm
 import utils
 from pprint import pprint
-torch.hub.help("intel-isl/MiDaS", "DPT_BEiT_L_384", force_reload=True)  # Triggers fresh download of MiDaS repo
+torch.hub.help("intel-isl/MiDaS", "DPT_BEiT_L_384", force_reload=False)  # Triggers fresh download of MiDaS repo
 from models.zoedepth.trainers.builder import get_trainer
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+import hydra
+from omegaconf import DictConfig, OmegaConf,open_dict
 import os
+import numpy as np
+import torch.multiprocessing as mp
 
 os.environ["PYOPENGL_PLATFORM"] = "egl"
 os.environ["WANDB_START_METHOD"] = "thread"
-
 
 def fix_random_seed(seed: int):
     import random
@@ -27,7 +29,6 @@ def fix_random_seed(seed: int):
 
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = True
-
 
 def main_worker(gpu, ngpus_per_node, conf):
     try:
@@ -47,13 +48,13 @@ def main_worker(gpu, ngpus_per_node, conf):
         print(f"Total parameters : {total_params}")
 
         
-        dataset_kwargs = {'dataset_name': conf.dataset, 'data_path': conf.data_path,'rgb_dir':conf.rgb_dir, 'depth_dir':conf.depth_dir}
-        dataset_kwargs['crop_size'] = (conf.crop_h, conf.crop_w)
+        dataset_kwargs = {'dataset_name': conf.datasets.nyudepthv2.dataset, 'data_path': conf.datasets.nyudepthv2.data_path,'rgb_dir':conf.datasets.nyudepthv2.rgb_dir, 'depth_dir':conf.datasets.nyudepthv2.depth_dir}
+        dataset_kwargs['crop_size'] = (conf.models[conf.common.train.image_model].train.input_height, conf.models[conf.common.train.image_model].train.input_width)
 
         train_dataset = get_dataset(**dataset_kwargs,is_train=True)
         val_dataset = get_dataset(**dataset_kwargs, is_train=False)
 
-        train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=conf.batch_size,
+        train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=conf.common.train.batch_size,
                                                 num_workers=0,pin_memory=True)
 
         val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=1,
@@ -81,55 +82,46 @@ def main_worker(gpu, ngpus_per_node, conf):
 # val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=1,
 #                                          num_workers=0,pin_memory=True)
 
+@hydra.main(version_base=None, config_path="configs", config_name="config_local")
+def run(conf : DictConfig):
+    OmegaConf.set_struct(conf, True)
+    with open_dict(conf):
+        try:
+            node_str = os.environ['SLURM_JOB_NODELIST'].replace(
+                '[', '').replace(']', '')
+            nodes = node_str.split(',')
 
-import os
-import numpy as np
-import torch.multiprocessing as mp
+            conf.common.world_size = len(nodes)
+            conf.common.rank = int(os.environ['SLURM_PROCID'])
+            # config.save_dir = "/ibex/scratch/bhatsf/videodepth/checkpoints"
 
-device_id=0
-opt = TrainOptions()
-conf=opt.get_arg_dict()
+        except KeyError as e:
+            # We are NOT using SLURM
+            conf.common.world_size = 1
+            conf.common.rank = 0
+            nodes = ["127.0.0.1"]
 
-try:
-    node_str = os.environ['SLURM_JOB_NODELIST'].replace(
-        '[', '').replace(']', '')
-    nodes = node_str.split(',')
+        if conf.common.train.distributed:
+            port = np.random.randint(15000, 15025)
+            conf.common.dist_url = 'tcp://{}:{}'.format(nodes[0], port)
+            conf.common.dist_backend = 'nccl'
+            conf.common.train_gpu = None
 
-    conf.world_size = len(nodes)
-    conf.rank = int(os.environ['SLURM_PROCID'])
-    # config.save_dir = "/ibex/scratch/bhatsf/videodepth/checkpoints"
+        ngpus_per_node = torch.cuda.device_count()
+        conf.common.ngpus_per_node = ngpus_per_node
+        pprint(conf)
 
-except KeyError as e:
-    # We are NOT using SLURM
-    conf.world_size = 1
-    conf.rank = 0
-    nodes = ["127.0.0.1"]
+        if conf.common.train.distributed:
+                conf.common.world_size = ngpus_per_node * conf.common.world_size
+                mp.spawn(main_worker, nprocs=ngpus_per_node,
+                        args=(ngpus_per_node, conf))
+        else:
+            if ngpus_per_node == 1:
+                conf.train_gpu = 0
+            OmegaConf.set_struct(conf, False)
+            main_worker(conf.train_gpu, ngpus_per_node, conf)
 
-
-if conf.distributed:
-    print(conf.rank)
-    port = np.random.randint(15000, 15025)
-    conf.dist_url = 'tcp://{}:{}'.format(nodes[0], port)
-    print(conf.dist_url)
-    conf.dist_backend = 'nccl'
-    conf.train_gpu = None
-
-ngpus_per_node = torch.cuda.device_count()
-conf.num_workers = conf.workers
-conf.ngpus_per_node = ngpus_per_node
-pprint(conf)
-
-
-if conf.distributed:
-        conf.world_size = ngpus_per_node * conf.world_size
-        mp.spawn(main_worker, nprocs=ngpus_per_node,
-                 args=(ngpus_per_node, conf))
-else:
-    if ngpus_per_node == 1:
-        conf.train_gpu = 0
-    main_worker(conf.train_gpu, ngpus_per_node, conf)
-
-
+run()
 
 # seed = conf.seed if 'seed' in conf and conf.seed else 43
 # fix_random_seed(seed)

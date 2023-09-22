@@ -1,0 +1,53 @@
+{
+    "os": "Windows-10-10.0.22621-SP0",
+    "python": "3.10.11",
+    "heartbeatAt": "2023-09-22T19:39:59.398925",
+    "startedAt": "2023-09-22T19:39:59.286820",
+    "docker": null,
+    "cuda": null,
+    "args": [],
+    "state": "running",
+    "program": "c:\\Users\\lahir\\code\\defocusVdepth\\train_zoe.py",
+    "codePathLocal": "train_zoe.py",
+    "codePath": "train_zoe.py",
+    "git": {
+        "remote": "https://github.com/sleekEagle/defocusVdepth.git",
+        "commit": "880a9c725c8dcde2eb681eeb4275c63b836ddafb"
+    },
+    "email": "lahirunuwanisme@gmail.com",
+    "root": "C:/Users/lahir/code/defocusVdepth",
+    "host": "mahasohona",
+    "username": "lahir",
+    "executable": "C:\\Users\\lahir\\anaconda3\\envs\\defvdep\\python.exe",
+    "cpu_count": 8,
+    "cpu_count_logical": 16,
+    "cpu_freq": {
+        "current": 2304.0,
+        "min": 0.0,
+        "max": 2304.0
+    },
+    "cpu_freq_per_core": [
+        {
+            "current": 2304.0,
+            "min": 0.0,
+            "max": 2304.0
+        }
+    ],
+    "disk": {
+        "/": {
+            "total": 933.8759727478027,
+            "used": 482.05191802978516
+        }
+    },
+    "gpu": "NVIDIA GeForce RTX 3070 Laptop GPU",
+    "gpu_count": 1,
+    "gpu_devices": [
+        {
+            "name": "NVIDIA GeForce RTX 3070 Laptop GPU",
+            "memory_total": 8589934592
+        }
+    ],
+    "memory": {
+        "total": 31.74881362915039
+    }
+}

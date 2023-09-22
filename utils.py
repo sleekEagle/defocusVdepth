@@ -568,7 +568,7 @@ def parallelize(config, model, find_unused_parameters=True):
         model = model.cuda(config.gpu)
 
     config.multigpu = False
-    if config.distributed:
+    if config.common.train.distributed:
         # Use DDP
         config.multigpu = True
         config.rank = config.rank * config.ngpus_per_node + config.gpu

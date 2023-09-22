@@ -42,7 +42,7 @@ from models.zoedepth.utils.misc import RunningAverageDict, colorize, colors
 
 
 def is_rank_zero(args):
-    return args.rank == 0
+    return args.common.rank == 0
 
 
 class BaseTrainer:
@@ -95,7 +95,7 @@ class BaseTrainer:
     def init_optimizer(self):
         m = self.model.module if self.config.multigpu else self.model
 
-        if self.config.zoe.train.same_lr:
+        if self.config.models.zoedepth.train.same_lr:
             print("Using same LR")
             if hasattr(m, 'core'):
                 m.core.unfreeze()
@@ -106,15 +106,16 @@ class BaseTrainer:
                 raise NotImplementedError(
                     f"Model {m.__class__.__name__} does not implement get_lr_params. Please implement it or use the same LR for all parameters.")
 
-            params = m.get_lr_params(self.config.zoe.train.optim_kwargs.lr)
+            params = m.get_lr_params(self.config.models.zoedepth.train.optim_kwargs.lr)
 
-        return optim.AdamW(params, lr=self.config.zoe.train.optim_kwargs.lr, weight_decay=self.config.zoe.train.optim_kwargs.wd)
+        return optim.AdamW(params, lr=self.config.models.zoedepth.train.optim_kwargs.lr, weight_decay=self.config.models.zoedepth.train.optim_kwargs.wd)
 
     def init_scheduler(self):
         lrs = [l['lr'] for l in self.optimizer.param_groups]
-        return optim.lr_scheduler.OneCycleLR(self.optimizer, lrs, epochs=self.config.zoe.train.epochs, steps_per_epoch=len(self.train_loader),
-                                             cycle_momentum=self.config.zoe.train.sched_kwargs.cycle_momentum,
-                                             base_momentum=0.85, max_momentum=0.95, div_factor=self.config.zoe.train.sched_kwargs.div_factor, final_div_factor=self.config.zoe.train.sched_kwargs.final_div_factor, pct_start=self.config.zoe.train.sched_kwargs.pct_start, three_phase=self.config.zoe.train.sched_kwargs.three_phase)
+        zoe_config=self.config.models.zoedepth.train
+        return optim.lr_scheduler.OneCycleLR(self.optimizer, lrs, epochs=self.config.common.train.epochs, steps_per_epoch=len(self.train_loader),
+                                             cycle_momentum=zoe_config.sched_kwargs.cycle_momentum,
+                                             base_momentum=0.85, max_momentum=0.95, div_factor=zoe_config.sched_kwargs.div_factor, final_div_factor=zoe_config.sched_kwargs.final_div_factor, pct_start=zoe_config.sched_kwargs.pct_start, three_phase=zoe_config.sched_kwargs.three_phase)
 
     def train_on_batch(self, batch, train_step):
         raise NotImplementedError
@@ -140,28 +141,28 @@ class BaseTrainer:
             return True
 
     def train(self):
-        print(f"Training {self.config.zoe.model.name}")
-        if self.config.uid is None:
-            self.config.uid = str(uuid.uuid4()).split('-')[-1]
-        run_id = f"{dt.now().strftime('%d-%h_%H-%M')}-{self.config.uid}"
+        print(f"Training {self.config.models.zoedepth.model.name}")
+        if self.config.common.uid is None:
+            self.config.common.uid = str(uuid.uuid4()).split('-')[-1]
+        run_id = f"{dt.now().strftime('%d-%h_%H-%M')}-{self.config.common.uid}"
         self.config.run_id = run_id
-        self.config.experiment_id = f"{self.config.zoe.model.name}{self.config.zoe.model.version_name}_{run_id}"
-        self.should_write = ((not self.config.distributed)
+        self.config.experiment_id = f"{self.config.models.zoedepth.model.name}{self.config.models.zoedepth.model.version_name}_{run_id}"
+        self.should_write = ((not self.config.common.train.distributed)
                              or self.config.rank == 0)
         self.should_log = self.should_write  # and logging
         if self.should_log:
             tags = self.config.tags.split(
-                ',') if self.config.tags != '' else None
-            wandb.init(project=self.config.project, name=self.config.experiment_id, config=flatten(self.config), dir=self.config.root,
-                       tags=tags, notes=self.config.notes, settings=wandb.Settings(start_method="thread"))
+                ',') if self.config.common.tags != '' else None
+            wandb.init(project=self.config.common.project, name=self.config.experiment_id, config=flatten(self.config), dir=self.config.common.root,
+                       tags=tags, notes=self.config.common.notes, settings=wandb.Settings(start_method="thread"))
 
         self.model.train()
         self.step = 0
         best_loss = np.inf
-        validate_every = int(self.config.validate_every * self.iters_per_epoch)
+        validate_every = int(self.config.common.train.validate_every * self.iters_per_epoch)
 
 
-        if self.config.prefetch:
+        if self.config.common.train.prefetch:
 
             for i, batch in tqdm(enumerate(self.train_loader), desc=f"Prefetching...",
                                  total=self.iters_per_epoch) if is_rank_zero(self.config) else enumerate(self.train_loader):
@@ -170,7 +171,7 @@ class BaseTrainer:
         losses = {}
         def stringify_losses(L): return "; ".join(map(
             lambda kv: f"{colors.fg.purple}{kv[0]}{colors.reset}: {round(kv[1].item(),3):.4e}", L.items()))
-        for epoch in range(self.config.epochs):
+        for epoch in range(self.config.common.train.epochs):
             if self.should_early_stop():
                 break
             
@@ -178,7 +179,7 @@ class BaseTrainer:
             ################################# Train loop ##########################################################
             if self.should_log:
                 wandb.log({"Epoch": epoch}, step=self.step)
-            pbar = tqdm(enumerate(self.train_loader), desc=f"Epoch: {epoch + 1}/{self.config.epochs}. Loop: Train",
+            pbar = tqdm(enumerate(self.train_loader), desc=f"Epoch: {epoch + 1}/{self.config.common.train.epochs}. Loop: Train",
                         total=self.iters_per_epoch) if is_rank_zero(self.config) else enumerate(self.train_loader)
             for i, batch in pbar:
                 if self.should_early_stop():
@@ -189,9 +190,9 @@ class BaseTrainer:
                 # print(f"trained batch {self.step+1} on rank {self.config.rank}")
 
                 self.raise_if_nan(losses)
-                if is_rank_zero(self.config) and self.config.print_losses:
+                if is_rank_zero(self.config) and self.config.common.print_losses:
                     pbar.set_description(
-                        f"Epoch: {epoch + 1}/{self.config.epochs}. Loop: Train. Losses: {stringify_losses(losses)}")
+                        f"Epoch: {epoch + 1}/{self.config.common.train.epochs}. Loop: Train. Losses: {stringify_losses(losses)}")
                 self.scheduler.step()
 
                 if self.should_log and self.step % 50 == 0:
@@ -227,7 +228,7 @@ class BaseTrainer:
 
                         self.model.train()
 
-                        if self.config.distributed:
+                        if self.config.common.train.distributed:
                             dist.barrier()
                         # print(f"Validated: {metrics} on device {self.config.rank}")
 
@@ -260,7 +261,7 @@ class BaseTrainer:
         with torch.no_grad():
             losses_avg = RunningAverageDict()
             metrics_avg = RunningAverageDict()
-            for i, batch in tqdm(enumerate(self.test_loader), desc=f"Epoch: {self.epoch + 1}/{self.config.epochs}. Loop: Validation", total=len(self.test_loader), disable=not is_rank_zero(self.config)):
+            for i, batch in tqdm(enumerate(self.test_loader), desc=f"Epoch: {self.epoch + 1}/{self.config.common.train.epochs}. Loop: Validation", total=len(self.test_loader), disable=not is_rank_zero(self.config)):
                 metrics, losses = self.validate_on_batch(batch, val_step=i)
 
                 if losses:
@@ -273,7 +274,7 @@ class BaseTrainer:
     def save_checkpoint(self, filename):
         if not self.should_write:
             return
-        root = self.config.save_dir
+        root = self.config.common.save_dir
         if not os.path.isdir(root):
             os.makedirs(root)
 
@@ -324,3 +325,4 @@ class BaseTrainer:
         table = wandb.Table(data=data, columns=["label", "value"])
         wandb.log({title: wandb.plot.bar(table, "label",
                   "value", title=title)}, step=self.step)
+

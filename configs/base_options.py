@@ -129,10 +129,15 @@ class BaseOptions():
         conf.update(conf_data)
         #replace conf with options from args if there are matches
         conf.update((k,v) for k,v in args.items() if v is not None)
-        return edict(conf)
+        # return edict(conf)
+        return args
     
 
-# opt = BaseOptions()
-# config=opt.get_arg_dict()
-# print(config)
+opt = BaseOptions()
+config=opt.get_arg_dict()
+print(config)
+
+config['image_model']
+
+get_model_config(config['image_model'])
 

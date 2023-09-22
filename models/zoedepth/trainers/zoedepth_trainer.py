@@ -45,7 +45,7 @@ class Trainer(BaseTrainer):
         self.device = device
         self.silog_loss = SILogLoss()
         self.grad_loss = GradL1Loss()
-        self.scaler = amp.GradScaler(enabled=self.config.use_amp)
+        self.scaler = amp.GradScaler(enabled=self.config.models.zoedepth.train.use_amp)
 
     def train_on_batch(self, batch, train_step):
         """
@@ -63,42 +63,42 @@ class Trainer(BaseTrainer):
 
         losses = {}
 
-        with amp.autocast(enabled=self.config.use_amp):
+        with amp.autocast(enabled=self.config.models.zoedepth.train.use_amp):
 
             output = self.model(images)
             pred_depths = output['metric_depth']
 
             l_si, pred = self.silog_loss(
                 pred_depths, depths_gt, mask=mask, interpolate=True, return_interpolated=True)
-            loss = self.config.zoe.train.w_si * l_si
+            loss = self.config.models.zoedepth.train.w_si * l_si
             losses[self.silog_loss.name] = l_si
 
-            if self.config.zoe.train.w_grad > 0:
+            if self.config.models.zoedepth.train.w_grad > 0:
                 l_grad = self.grad_loss(pred, depths_gt, mask=mask)
-                loss = loss + self.config.zoe.train.w_grad * l_grad
+                loss = loss + self.config.models.zoedepth.train.w_grad * l_grad
                 losses[self.grad_loss.name] = l_grad
             else:
                 l_grad = torch.Tensor([0])
 
         self.scaler.scale(loss).backward()
 
-        if self.config.clip_grad > 0:
+        if self.config.models.zoedepth.train.clip_grad:
             self.scaler.unscale_(self.optimizer)
             nn.utils.clip_grad_norm_(
-                self.model.parameters(), self.config.clip_grad)
+                self.model.parameters(), self.config.models.zoedepth.train.clip_grad)
 
         self.scaler.step(self.optimizer)
 
-        if self.should_log and (self.step % int(self.config.log_images_every * self.iters_per_epoch)) == 0:
+        if self.should_log and (self.step % int(self.config.common.train.log_images_every * self.iters_per_epoch)) == 0:
             # -99 is treated as invalid depth in the log_images function and is colored grey.
             depths_gt[torch.logical_not(mask)] = -99
             
             print('accessing config...****************')
-            print(self.config['min_depth'])
+            print(self.config.datasets.nyudepthv2.min_depth)
             print('*********************************')
 
             self.log_images(rgb={"Input": images[0, ...]}, depth={"GT": depths_gt[0], "PredictedMono": pred[0]}, prefix="Train",
-                            min_depth=self.config['min_depth'], max_depth=self.config['max_depth'])
+                            min_depth=self.config.datasets.nyudepthv2.min_depth, max_depth=self.config.datasets.nyudepthv2.max_depth)
 
             if self.config.get("log_rel", False):
                 self.log_images(
@@ -111,9 +111,9 @@ class Trainer(BaseTrainer):
     
     @torch.no_grad()
     def eval_infer(self, x):
-        en=False if self.config.use_amp==0 else 1
+        en=False if self.config.models.zoedepth.train.use_amp==0 else 1
         with amp.autocast(enabled=en):
-            m = self.model.module if self.config.multigpu else self.model
+            m = self.model.module if self.config.common.train.multigpu else self.model
             pred_depths = m(x)['metric_depth']
         return pred_depths
 
@@ -169,7 +169,7 @@ class Trainer(BaseTrainer):
             pred_depths = self.eval_infer(images)
         pred_depths = pred_depths.squeeze().unsqueeze(0).unsqueeze(0)
 
-        with amp.autocast(enabled=self.config.use_amp):
+        with amp.autocast(enabled=self.config.models.zoedepth.train.use_amp):
             l_depth = self.silog_loss(
                 pred_depths, depths_gt, mask=mask.to(torch.bool), interpolate=True)
 
@@ -179,6 +179,6 @@ class Trainer(BaseTrainer):
         if val_step == 1 and self.should_log:
             depths_gt[torch.logical_not(mask)] = -99
             self.log_images(rgb={"Input": images[0]}, depth={"GT": depths_gt[0], "PredictedMono": pred_depths[0]}, prefix="Test",
-                            min_depth=self.config.min_depth, max_depth=self.config.max_depth)
+                            min_depth=self.config.datasets.nyudepthv2.min_depth, max_depth=self.config.datasets.nyudepthv2.max_depth)
 
         return metrics, losses

@@ -45,12 +45,12 @@ def get_trainer(config):
     Returns:
         Trainer (inherited from zoedepth.trainers.BaseTrainer): The Trainer object
     """
-    assert "trainer" in config.zoe.train and config.zoe.train.trainer is not None and config.zoe.train.trainer != '', "Trainer not specified. Config: {0}".format(
+    assert "trainer" in config.models.zoedepth.train and config.models.zoedepth.train is not None and config.models.zoedepth.train != '', "Trainer not specified. Config: {0}".format(
         config)
     try:
-        print(f"zoedepth.trainers.{config.zoe.train.trainer}_trainer")
+        print(f"zoedepth.trainers.{config.models.zoedepth.train}_trainer")
         Trainer = getattr(import_module(
-            f"zoedepth.trainers.{config.zoe.train.trainer}_trainer"), 'Trainer')
+            f"zoedepth.trainers.{config.models.zoedepth.train.trainer}_trainer"), 'Trainer')
     except ModuleNotFoundError as e:
-        raise ValueError(f"Trainer {config.zoe.train.trainer}_trainer not found.") from e
+        raise ValueError(f"Trainer {config.models.zoedepth.train.trainer}_trainer not found.") from e
     return Trainer
