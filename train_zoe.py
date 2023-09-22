@@ -105,7 +105,7 @@ def run_train(conf : DictConfig):
             port = np.random.randint(15000, 15025)
             conf.common.dist_url = 'tcp://{}:{}'.format(nodes[0], port)
             conf.common.dist_backend = 'nccl'
-            conf.common.train_gpu = None
+            conf.common.train.gpu = None
 
         ngpus_per_node = torch.cuda.device_count()
         conf.common.ngpus_per_node = ngpus_per_node
@@ -117,9 +117,9 @@ def run_train(conf : DictConfig):
                         args=(ngpus_per_node, conf))
         else:
             if ngpus_per_node == 1:
-                conf.train_gpu = 0
+                conf.common.train.gpu = 0
             OmegaConf.set_struct(conf, False)
-            main_worker(conf.train_gpu, ngpus_per_node, conf)
+            main_worker(conf.common.train.gpu, ngpus_per_node, conf)
 
 if __name__ == "__main__":
     run_train()
