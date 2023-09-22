@@ -27,7 +27,7 @@ common:
 datasets:
     nyudepthv2:
         data_path: D:\\data\\
-        rgb_dir: refocused\f_25_fdist_2_depth\
+        rgb_dir: refocused\f_25_fdist_2_dsigma_3\
         depth_dir: rawDepth
         dataset: nyudepthv2
         virtual_batch_size: 12
