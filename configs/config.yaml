@@ -4,6 +4,7 @@ common:
     save_dir: /p/blurdepth/results/defvdep/
     uid: 0
     tags: ""
+    print_losses: True
     project: zoedepth
     root: .
     notes: ""
@@ -14,6 +15,13 @@ common:
         prefetch: false
         distributed: false
         image_model: zoedepth
+        epochs: 5
+        batch_size: 1
+        multigpu: false
+    eval:
+        min_depth: 0.1
+        max_depth: 10.0
+
 
 datasets:
     nyudepthv2:
@@ -21,12 +29,10 @@ datasets:
         rgb_dir: refocused_f_25_fdist_2/
         depth_dir: rawDepth
         dataset: nyudepthv2
-        batch_size: 1
         virtual_batch_size: 12
         workers: 1
         garg_crop: false
         eigen_crop: true
-        use_amp: false
         min_depth: 1e-3
         max_depth: 10
 
@@ -56,8 +62,7 @@ models:
             use_pretrained_midas: false
             pretrained_resource: url::https://github.com/isl-org/ZoeDepth/releases/download/v1.0/ZoeD_M12_N.pt
             trainer: zoedepth
-            epochs: 5
-            bs: 16
+            use_amp: false
             optim_kwargs: 
                 lr: 0.000161
                 wd: 0.01
@@ -74,6 +79,7 @@ models:
             w_grad: 0
             avoid_boundary: false
             random_crop: false
+            clip_grad: true
             input_width: 640
             input_height: 480
             midas_lr_factor: 1
@@ -89,7 +95,5 @@ models:
             train_midas: false
             use_pretrained_midas: false
             pretrained_resource: url::https://github.com/isl-org/ZoeDepth/releases/download/v1.0/ZoeD_M12_N.pt
-
-
 
 
