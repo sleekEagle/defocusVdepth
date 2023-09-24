@@ -55,4 +55,4 @@ def build_model(config,mode) -> DepthModel:
         raise ValueError(
             f"Model {config.image_model} has no get_version function.") from e
     print(get_version(config.models.zoedepth.model.version_name))
-    return get_version(config.models.zoedepth.model.version_name).build_from_config(config.models.zoedepth)
+    return get_version(config.models.zoedepth.model.version_name).build_from_config(config.models.zoedepth[mode])
