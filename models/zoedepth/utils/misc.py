@@ -43,7 +43,6 @@ import torch.utils.data.distributed
 from PIL import Image
 from torchvision.transforms import ToTensor
 
-
 class RunningAverage:
     def __init__(self):
         self.avg = 0

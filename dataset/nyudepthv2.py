@@ -93,7 +93,9 @@ class nyudepthv2(BaseDataset):
         depth = depth / 1000.0  # convert in meters
         blur=get_blur(self.fdist,depth)
         mask=depth>0
-        return {'image': image, 'depth': depth, 'blur':blur, 'class_id': class_id,'dataset':'nyudepthv2','mask':mask}
+        #get the derivative of blur wrt depth
+        d_blur=torch.square(1/depth)
+        return {'image': image, 'depth': depth, 'blur':blur, 'dblur':d_blur, 'class_id': class_id,'dataset':'nyudepthv2','mask':mask}
 
 # for st_iter, sample_batch in enumerate(loader):
 #         input_RGB = sample_batch['image']

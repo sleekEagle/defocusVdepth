@@ -8,6 +8,7 @@ common:
     project: zoedepth
     root: .
     notes: ""
+    model_name: blurnet
     train:
         workers: 16
         validate_every: 0.25
@@ -96,3 +97,24 @@ models:
             train_midas: false
             use_pretrained_midas: false
             pretrained_resource: url::https://github.com/isl-org/ZoeDepth/releases/download/v1.0/ZoeD_M12_N.pt
+    blurnet:
+        model: 
+            name: blurnet
+            version_name: v1
+        train:
+            trainer: blurnet
+            blur_w: 1
+            dblur_w: 1
+            clip_grad: true
+            use_amp: false
+            optim_kwargs: 
+                lr: 0.001
+                wd: 0.01
+            sched_kwargs:
+                div_factor: 1
+                final_div_factor: 10000
+                pct_start: 0.7
+                three_phase: false
+                cycle_momentum: true    
+        eval:
+
