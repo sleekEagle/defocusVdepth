@@ -86,7 +86,7 @@ def main_worker(gpu, ngpus_per_node, conf):
 # val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=1,
 #                                          num_workers=0,pin_memory=True)
 
-@hydra.main(version_base=None, config_path="configs", config_name="config_local")
+@hydra.main(version_base=None, config_path="configs", config_name="config")
 def run_train(conf : DictConfig):
     OmegaConf.set_struct(conf, True)
     with open_dict(conf):
